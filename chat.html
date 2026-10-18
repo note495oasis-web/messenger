@@ -291,6 +291,71 @@ dialog::backdrop {
   margin-top: 16px;
 }
 
+body.light {
+  background: #f2f5fa;
+  color: #17202e;
+}
+
+body.light .topbar,
+body.light .sidebar {
+  background: #ffffff;
+  border-color: #dbe1ea;
+}
+
+body.light .card,
+body.light .chat-header,
+body.light .composer,
+body.light dialog {
+  background: #ffffff;
+  border-color: #dbe1ea;
+  color: #17202e;
+}
+
+body.light input {
+  background: #ffffff;
+  color: #17202e;
+  border-color: #c7d0dd;
+}
+
+body.light .chat-item {
+  border-color: #e3e8f0;
+}
+
+body.light .chat-item.active {
+  background: #d8e6ff;
+  color: #12233d;
+}
+
+body.light .message {
+  background: #e8edf5;
+  color: #17202e;
+}
+
+body.light .message.own {
+  background: #cfe0ff;
+  color: #12233d;
+}
+
+body.light .user,
+body.light .chat-id,
+body.light .author,
+body.light .time,
+body.light .note,
+body.light .empty,
+body.light .build {
+  color: #5c6b81;
+}
+
+body.light .status {
+  background: #e6ebf3;
+  color: #17202e;
+}
+
+body.light .status.error {
+  background: #f7d9dd;
+  color: #7b2230;
+}
+
 @media (max-width: 650px) {
   .sidebar {
     width: 160px;
@@ -338,7 +403,7 @@ dialog::backdrop {
 
 <header class="topbar">
   <div class="brand">DataChats</div>
-  <div class="build">Версия REST-1</div>
+  <div class="build">Версия REST-2</div>
 </header>
 
 <div id="status" class="status hidden" role="status"></div>
@@ -399,8 +464,10 @@ dialog::backdrop {
 
     <div class="sidebar-actions">
       <button id="createButton" class="primary">Создать чат</button>
+      <button id="searchButton">Найти по ID</button>
       <button id="joinButton">Присоединиться</button>
       <button id="refreshButton">Обновить</button>
+      <button id="themeButton">Светлая тема</button>
       <button id="logoutButton">Выйти</button>
     </div>
   </aside>
@@ -444,6 +511,26 @@ dialog::backdrop {
   </form>
 </dialog>
 
+<dialog id="searchDialog">
+  <h2>Найти пользователя</h2>
+
+  <form id="searchForm" class="stack">
+    <input
+      id="searchInput"
+      placeholder="Введи ID пользователя"
+      required
+      autocomplete="off"
+    >
+
+    <div id="searchResult" class="note"></div>
+
+    <div class="dialog-actions">
+      <button class="primary" type="submit">Найти</button>
+      <button type="button" data-close>Закрыть</button>
+    </div>
+  </form>
+</dialog>
+
 <dialog id="joinDialog">
   <h2 id="joinTitle">Присоединиться</h2>
   <form id="joinForm">
@@ -480,13 +567,14 @@ dialog::backdrop {
 (() => {
   'use strict';
 
-  // Здесь должны быть реальные ID из Appwrite, а не только названия.
   const CONFIG = {
     endpoint: 'https://fra.cloud.appwrite.io/v1',
     projectId: '6ad4dbfb00355225f62d',
     databaseId: 'messenger',
     chatsId: 'chats',
-    messagesId: 'messages'
+    messagesId: 'messages',
+    usersId: 'users',
+    generalChatId: 'general'
   };
 
   const $ = id => document.getElementById(id);
@@ -568,6 +656,21 @@ dialog::backdrop {
     return { method: 'limit', values: [value] };
   }
 
+  function applyTheme(theme) {
+    const light = theme === 'light';
+
+    document.body.classList.toggle('light', light);
+    localStorage.setItem('datachats-theme', theme);
+
+    $('themeButton').textContent = light
+      ? 'Тёмная тема'
+      : 'Светлая тема';
+  }
+
+  function dmKeyFor(firstId, secondId) {
+    return [firstId, secondId].sort().join('__');
+  }
+
   function newId() {
     return crypto.randomUUID().replaceAll('-', '');
   }
@@ -638,10 +741,29 @@ dialog::backdrop {
       documentsPath(CONFIG.chatsId),
       'GET',
       undefined,
-      [{ method: 'contains', attribute: 'memberIds', values: [user.$id] }, limit(100)]
+      [
+        {
+          method: 'contains',
+          attribute: 'memberIds',
+          values: [user.$id]
+        },
+        limit(100)
+      ]
     );
 
-    chatItems = data.documents || [];
+    const generalChat = {
+      $id: CONFIG.generalChatId,
+      title: 'Общий чат',
+      inviteCode: '',
+      ownerId: '',
+      memberIds: []
+    };
+
+    chatItems = [
+      generalChat,
+      ...(data.documents || [])
+    ];
+
     renderChats();
   }
 
@@ -677,7 +799,13 @@ dialog::backdrop {
 
     $('chatTitle').textContent = chat.title;
     $('chatIdLabel').textContent = 'ID: ' + chat.$id;
-    $('inviteButton').classList.remove('hidden');
+
+    if (chat.$id === CONFIG.generalChatId) {
+      $('inviteButton').classList.add('hidden');
+    } else {
+      $('inviteButton').classList.remove('hidden');
+    }
+
     $('messageForm').classList.remove('hidden');
     $('messages').replaceChildren();
 
@@ -789,6 +917,45 @@ dialog::backdrop {
     }
   }
 
+  async function openDirectChat(otherUser) {
+    const key = dmKeyFor(user.$id, otherUser.userId);
+
+    const existing = await api(
+      documentsPath(CONFIG.chatsId),
+      'GET',
+      undefined,
+      [equal('dmKey', key), limit(1)]
+    );
+
+    let chat = existing.documents?.[0];
+
+    if (!chat) {
+      chat = await api(
+        documentsPath(CONFIG.chatsId),
+        'POST',
+        {
+          documentId: newId(),
+          data: {
+            title: 'Личные сообщения: ' + (otherUser.name || otherUser.userId),
+            inviteCode: inviteCode(),
+            ownerId: user.$id,
+            memberIds: [user.$id, otherUser.userId],
+            allowedUserIds: [],
+            dmKey: key
+          },
+          permissions: []
+        }
+      );
+    }
+
+    $('searchDialog').close();
+    $('searchInput').value = '';
+    $('searchResult').textContent = '';
+
+    await loadChats();
+    await openChat(chat);
+  }
+
   $('authForm').addEventListener('submit', event => {
     event.preventDefault();
 
@@ -825,7 +992,23 @@ dialog::backdrop {
       });
 
       await api('/account/sessions/email', 'POST', { email, password });
-      await enterApp(await api('/account'));
+
+      const account = await api('/account');
+
+      await api(
+        documentsPath(CONFIG.usersId),
+        'POST',
+        {
+          documentId: account.$id,
+          data: {
+            userId: account.$id,
+            name: account.name || email.split('@')[0]
+          },
+          permissions: []
+        }
+      );
+
+      await enterApp(account);
     });
   });
 
@@ -893,6 +1076,51 @@ dialog::backdrop {
 
       await loadChats();
       await openChat(chat);
+    });
+  });
+
+  $('themeButton').addEventListener('click', () => {
+    const current = localStorage.getItem('datachats-theme') || 'dark';
+    applyTheme(current === 'light' ? 'dark' : 'light');
+  });
+
+  $('searchButton').addEventListener('click', () => {
+    $('searchInput').value = '';
+    $('searchResult').textContent = '';
+    $('searchDialog').showModal();
+  });
+
+  $('searchForm').addEventListener('submit', event => {
+    event.preventDefault();
+
+    action(event.submitter, async () => {
+      const value = $('searchInput').value.trim();
+
+      if (!value) throw new Error('Введи ID пользователя');
+
+      if (value === user.$id) {
+        $('searchResult').textContent = 'Это твой собственный ID.';
+        return;
+      }
+
+      const data = await api(
+        documentsPath(CONFIG.usersId),
+        'GET',
+        undefined,
+        [equal('userId', value), limit(1)]
+      );
+
+      const found = data.documents?.[0];
+
+      if (!found) {
+        $('searchResult').textContent = 'Пользователь с таким ID не найден.';
+        return;
+      }
+
+      $('searchResult').textContent =
+        'Найден: ' + (found.name || found.userId);
+
+      await openDirectChat(found);
     });
   });
 
@@ -1040,6 +1268,7 @@ dialog::backdrop {
     }
   }
 
+  applyTheme(localStorage.getItem('datachats-theme') || 'dark');
   init();
 })();
 </script>
