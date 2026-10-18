@@ -462,7 +462,7 @@ body.light .request-item {
 
 <header class="topbar">
   <div class="brand">DataChats</div>
-  <div class="build">Версия REST-6</div>
+  <div class="build">Версия REST-7</div>
 </header>
 
 <div id="status" class="status hidden" role="status"></div>
@@ -724,6 +724,25 @@ body.light .request-item {
     <div class="dialog-actions">
       <button class="primary" type="submit">Отправить письмо</button>
       <button type="button" data-close>Закрыть</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="resetDialog">
+  <h2>Создать новый пароль</h2>
+
+  <form id="resetForm" class="stack">
+    <input
+      id="newPasswordInput"
+      type="password"
+      placeholder="Новый пароль — минимум 8 символов"
+      minlength="8"
+      required
+      autocomplete="new-password"
+    >
+
+    <div class="dialog-actions">
+      <button class="primary" type="submit">Сохранить пароль</button>
     </div>
   </form>
 </dialog>
@@ -1241,6 +1260,42 @@ body.light .request-item {
     }
   }
 
+  function getQueryParam(name) {
+    return new URLSearchParams(window.location.search).get(name);
+  }
+
+  async function handlePasswordRecovery() {
+    const userId = getQueryParam('userId');
+    const secret = getQueryParam('secret');
+
+    if (!userId || !secret) return;
+
+    $('resetDialog').showModal();
+
+    $('resetForm').addEventListener('submit', event => {
+      event.preventDefault();
+
+      action(event.submitter, async () => {
+        const password = $('newPasswordInput').value;
+
+        if (password.length < 8) {
+          throw new Error('Пароль должен быть минимум из 8 символов');
+        }
+
+        await api('/account/recovery', 'PUT', {
+          userId,
+          secret,
+          password
+        });
+
+        history.replaceState({}, '', window.location.pathname);
+
+        $('resetDialog').close();
+        status('Пароль изменён. Теперь войди с email и новым паролем.');
+      });
+    });
+  }
+
   $('authForm').addEventListener('submit', event => {
     event.preventDefault();
 
@@ -1720,6 +1775,7 @@ body.light .request-item {
     }
   }
 
+  handlePasswordRecovery();
   applyTheme(localStorage.getItem('datachats-theme') || 'dark');
   applySidebar((localStorage.getItem('datachats-sidebar') || 'open') === 'open');
   init();
