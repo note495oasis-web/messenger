@@ -134,6 +134,11 @@ input {
   flex-direction: column;
   background: #192333;
   border-right: 1px solid #30405a;
+  transition: margin-left .25s ease;
+}
+
+.sidebar.closed {
+  margin-left: -270px;
 }
 
 .sidebar-head {
@@ -272,6 +277,24 @@ input {
   flex: 1;
 }
 
+.sidebar-toggle {
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border-radius: 50%;
+  font-size: 18px;
+  line-height: 1;
+}
+
+.sidebar-toggle span {
+  display: inline-block;
+  transition: transform .25s ease;
+}
+
+.sidebar.closed + .main .sidebar-toggle span {
+  transform: rotate(180deg);
+}
+
 dialog {
   width: min(420px, calc(100% - 28px));
   color: #edf2fb;
@@ -361,6 +384,10 @@ body.light .status.error {
     width: 160px;
   }
 
+  .sidebar.closed {
+    margin-left: -160px;
+  }
+
   .sidebar-actions {
     padding: 8px;
   }
@@ -403,7 +430,7 @@ body.light .status.error {
 
 <header class="topbar">
   <div class="brand">DataChats</div>
-  <div class="build">Версия REST-2</div>
+  <div class="build">Версия REST-4</div>
 </header>
 
 <div id="status" class="status hidden" role="status"></div>
@@ -454,7 +481,7 @@ body.light .status.error {
 </section>
 
 <section id="appScreen" class="app hidden">
-  <aside class="sidebar">
+  <aside id="sidebar" class="sidebar">
     <div class="sidebar-head">
       Мои чаты
       <div id="userLabel" class="user"></div>
@@ -467,7 +494,6 @@ body.light .status.error {
       <button id="searchButton">Найти по ID</button>
       <button id="joinButton">Присоединиться</button>
       <button id="refreshButton">Обновить</button>
-      <button id="themeButton">Светлая тема</button>
       <button id="logoutButton">Выйти</button>
     </div>
   </aside>
@@ -479,9 +505,19 @@ body.light .status.error {
         <div id="chatIdLabel" class="chat-id"></div>
       </div>
 
-      <button id="inviteButton" class="hidden">
-        Приглашение / ID
-      </button>
+      <div class="dialog-actions">
+        <button id="sidebarToggle" class="sidebar-toggle" type="button">
+          <span>◀</span>
+        </button>
+
+        <button id="inviteButton" class="hidden">
+          Приглашение / ID
+        </button>
+
+        <button id="settingsButton">
+          Настройки
+        </button>
+      </div>
     </header>
 
     <div id="messages" class="messages">
@@ -522,6 +558,15 @@ body.light .status.error {
       autocomplete="off"
     >
 
+    <div class="note">
+      Твой ID:
+      <strong id="myIdLabel"></strong>
+    </div>
+
+    <button id="copyMyIdButton" type="button">
+      Скопировать мой ID
+    </button>
+
     <div id="searchResult" class="note"></div>
 
     <div class="dialog-actions">
@@ -529,6 +574,24 @@ body.light .status.error {
       <button type="button" data-close>Закрыть</button>
     </div>
   </form>
+</dialog>
+
+<dialog id="settingsDialog">
+  <h2>Настройки</h2>
+
+  <div class="stack">
+    <button id="themeButton">
+      Светлая тема
+    </button>
+
+    <button id="sidebarSettingsButton">
+      Скрыть чаты
+    </button>
+
+    <button data-close>
+      Закрыть
+    </button>
+  </div>
 </dialog>
 
 <dialog id="joinDialog">
@@ -667,6 +730,20 @@ body.light .status.error {
       : 'Светлая тема';
   }
 
+  function applySidebar(open) {
+    $('sidebar').classList.toggle('closed', !open);
+    localStorage.setItem('datachats-sidebar', open ? 'open' : 'closed');
+
+    $('sidebarSettingsButton').textContent = open
+      ? 'Скрыть чаты'
+      : 'Показать чаты';
+  }
+
+  function toggleSidebar() {
+    const isOpen = !$('sidebar').classList.contains('closed');
+    applySidebar(!isOpen);
+  }
+
   function dmKeyFor(firstId, secondId) {
     return [firstId, secondId].sort().join('__');
   }
@@ -708,6 +785,8 @@ body.light .status.error {
     $('userLabel').textContent = guest
       ? 'Гость ' + user.$id.slice(0, 6)
       : (user.name || user.email);
+
+    $('myIdLabel').textContent = user.$id;
 
     $('joinButton').textContent = guest
       ? 'По приглашению'
@@ -1079,15 +1158,27 @@ body.light .status.error {
     });
   });
 
+  $('settingsButton').addEventListener('click', () => {
+    $('settingsDialog').showModal();
+  });
+
   $('themeButton').addEventListener('click', () => {
     const current = localStorage.getItem('datachats-theme') || 'dark';
     applyTheme(current === 'light' ? 'dark' : 'light');
   });
 
+  $('sidebarSettingsButton').addEventListener('click', toggleSidebar);
+  $('sidebarToggle').addEventListener('click', toggleSidebar);
+
   $('searchButton').addEventListener('click', () => {
     $('searchInput').value = '';
     $('searchResult').textContent = '';
+    $('myIdLabel').textContent = user?.$id || '';
     $('searchDialog').showModal();
+  });
+
+  $('copyMyIdButton').addEventListener('click', () => {
+    copyField('myIdLabel');
   });
 
   $('searchForm').addEventListener('submit', event => {
@@ -1227,12 +1318,14 @@ body.light .status.error {
   });
 
   async function copyField(id) {
+    const element = $(id);
+    const text = element.value || element.textContent;
+
     try {
-      await navigator.clipboard.writeText($(id).value);
+      await navigator.clipboard.writeText(text);
       status('Скопировано');
     } catch {
-      $(id).focus();
-      $(id).select();
+      if (element.select) element.select();
       status('Выделил текст. Нажми Ctrl+C или скопируй вручную.');
     }
   }
@@ -1269,6 +1362,7 @@ body.light .status.error {
   }
 
   applyTheme(localStorage.getItem('datachats-theme') || 'dark');
+  applySidebar((localStorage.getItem('datachats-sidebar') || 'open') === 'open');
   init();
 })();
 </script>
