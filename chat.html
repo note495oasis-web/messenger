@@ -634,12 +634,11 @@ dialog::backdrop {
   }
 
   async function loadChats() {
-    // equal с массивным атрибутом ищет документы, содержащие этот ID.
     const data = await api(
       documentsPath(CONFIG.chatsId),
       'GET',
       undefined,
-      [equal('memberIds', user.$id), limit(100)]
+      [{ method: 'contains', attribute: 'memberIds', values: [user.$id] }, limit(100)]
     );
 
     chatItems = data.documents || [];
