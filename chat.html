@@ -57,6 +57,10 @@ input {
   background: #3879f6;
 }
 
+.danger {
+  background: #a63a4a;
+}
+
 .hidden {
   display: none !important;
 }
@@ -295,8 +299,31 @@ input {
   transform: rotate(180deg);
 }
 
+.checkbox-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.checkbox-row input {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+.request-item {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px;
+  border: 1px solid #34445e;
+  border-radius: 10px;
+  overflow-wrap: anywhere;
+}
+
 dialog {
-  width: min(420px, calc(100% - 28px));
+  width: min(440px, calc(100% - 28px));
   color: #edf2fb;
   background: #1c283b;
   border: 1px solid #42516b;
@@ -312,6 +339,7 @@ dialog::backdrop {
   display: flex;
   gap: 8px;
   margin-top: 16px;
+  flex-wrap: wrap;
 }
 
 body.light {
@@ -379,6 +407,10 @@ body.light .status.error {
   color: #7b2230;
 }
 
+body.light .request-item {
+  border-color: #dbe1ea;
+}
+
 @media (max-width: 650px) {
   .sidebar {
     width: 160px;
@@ -430,7 +462,7 @@ body.light .status.error {
 
 <header class="topbar">
   <div class="brand">DataChats</div>
-  <div class="build">Версия REST-4</div>
+  <div class="build">Версия REST-5</div>
 </header>
 
 <div id="status" class="status hidden" role="status"></div>
@@ -514,6 +546,10 @@ body.light .status.error {
           Приглашение / ID
         </button>
 
+        <button id="chatSettingsButton" class="hidden">
+          Настройки чата
+        </button>
+
         <button id="settingsButton">
           Настройки
         </button>
@@ -592,6 +628,41 @@ body.light .status.error {
       Закрыть
     </button>
   </div>
+</dialog>
+
+<dialog id="chatSettingsDialog">
+  <h2>Настройки чата</h2>
+
+  <form id="chatSettingsForm" class="stack">
+    <label>
+      Название чата
+      <input id="chatTitleInput" maxlength="100" required>
+    </label>
+
+    <label class="checkbox-row">
+      <input id="privateCheckbox" type="checkbox">
+      Приватный чат
+    </label>
+
+    <p class="note">
+      В приватном чате новый пользователь сначала отправляет заявку.
+      Владелец должен принять её, чтобы человек смог войти.
+    </p>
+
+    <div id="requestsBox" class="hidden">
+      <strong>Заявки на вход</strong>
+      <div id="requestsList" class="stack"></div>
+    </div>
+
+    <button id="leaveChatButton" class="danger hidden" type="button">
+      Выйти из чата
+    </button>
+
+    <div class="dialog-actions">
+      <button class="primary" type="submit">Сохранить</button>
+      <button type="button" data-close>Закрыть</button>
+    </div>
+  </form>
 </dialog>
 
 <dialog id="joinDialog">
@@ -758,6 +829,15 @@ body.light .status.error {
       .join('').toUpperCase();
   }
 
+  function isOwner(chat) {
+    return chat.ownerId === user.$id;
+  }
+
+  function isMember(chat) {
+    return Array.isArray(chat.memberIds) &&
+      chat.memberIds.includes(user.$id);
+  }
+
   async function action(button, operation) {
     if (button.disabled) return;
     button.disabled = true;
@@ -879,12 +959,10 @@ body.light .status.error {
     $('chatTitle').textContent = chat.title;
     $('chatIdLabel').textContent = 'ID: ' + chat.$id;
 
-    if (chat.$id === CONFIG.generalChatId) {
-      $('inviteButton').classList.add('hidden');
-    } else {
-      $('inviteButton').classList.remove('hidden');
-    }
+    const isGeneral = chat.$id === CONFIG.generalChatId;
 
+    $('inviteButton').classList.toggle('hidden', isGeneral);
+    $('chatSettingsButton').classList.toggle('hidden', isGeneral);
     $('messageForm').classList.remove('hidden');
     $('messages').replaceChildren();
 
@@ -1020,6 +1098,8 @@ body.light .status.error {
             ownerId: user.$id,
             memberIds: [user.$id, otherUser.userId],
             allowedUserIds: [],
+            isPrivate: false,
+            joinRequests: [],
             dmKey: key
           },
           permissions: []
@@ -1033,6 +1113,77 @@ body.light .status.error {
 
     await loadChats();
     await openChat(chat);
+  }
+
+  function openChatSettings() {
+    if (!currentChat || currentChat.$id === CONFIG.generalChatId) return;
+
+    $('chatTitleInput').value = currentChat.title;
+    $('privateCheckbox').checked = currentChat.isPrivate === true;
+
+    $('leaveChatButton').classList.toggle(
+      'hidden',
+      isOwner(currentChat)
+    );
+
+    renderJoinRequests();
+    $('chatSettingsDialog').showModal();
+  }
+
+  function renderJoinRequests() {
+    const requests = Array.isArray(currentChat.joinRequests)
+      ? currentChat.joinRequests
+      : [];
+
+    $('requestsBox').classList.toggle('hidden', !requests.length);
+    $('requestsList').replaceChildren();
+
+    for (const requesterId of requests) {
+      const row = document.createElement('div');
+      row.className = 'request-item';
+
+      const label = document.createElement('span');
+      label.textContent = 'ID: ' + requesterId;
+
+      const button = document.createElement('button');
+      button.className = 'primary';
+      button.type = 'button';
+      button.textContent = 'Принять';
+
+      button.addEventListener('click', () => {
+        action(button, async () => {
+          if (!isOwner(currentChat)) {
+            throw new Error('Принимать заявки может только владелец чата');
+          }
+
+          const members = Array.isArray(currentChat.memberIds)
+            ? currentChat.memberIds
+            : [];
+
+          const requests = Array.isArray(currentChat.joinRequests)
+            ? currentChat.joinRequests
+            : [];
+
+          currentChat = await api(
+            documentsPath(CONFIG.chatsId) + '/' +
+              encodeURIComponent(currentChat.$id),
+            'PATCH',
+            {
+              data: {
+                memberIds: [...members, requesterId],
+                joinRequests: requests.filter(id => id !== requesterId)
+              }
+            }
+          );
+
+          renderJoinRequests();
+          await loadChats();
+        });
+      });
+
+      row.append(label, button);
+      $('requestsList').append(row);
+    }
   }
 
   $('authForm').addEventListener('submit', event => {
@@ -1113,6 +1264,7 @@ body.light .status.error {
       $('authScreen').classList.remove('hidden');
       $('messageForm').classList.add('hidden');
       $('inviteButton').classList.add('hidden');
+      $('chatSettingsButton').classList.add('hidden');
       $('messages').replaceChildren();
       $('chatTitle').textContent = 'Выберите чат';
       $('chatIdLabel').textContent = '';
@@ -1144,7 +1296,9 @@ body.light .status.error {
             inviteCode: inviteCode(),
             ownerId: user.$id,
             memberIds: [user.$id],
-            allowedUserIds: []
+            allowedUserIds: [],
+            isPrivate: false,
+            joinRequests: []
           },
           permissions: []
         }
@@ -1169,6 +1323,81 @@ body.light .status.error {
 
   $('sidebarSettingsButton').addEventListener('click', toggleSidebar);
   $('sidebarToggle').addEventListener('click', toggleSidebar);
+
+  $('chatSettingsButton').addEventListener('click', openChatSettings);
+
+  $('chatSettingsForm').addEventListener('submit', event => {
+    event.preventDefault();
+
+    action(event.submitter, async () => {
+      if (!currentChat) return;
+
+      if (!isOwner(currentChat)) {
+        throw new Error('Изменять настройки может только владелец чата');
+      }
+
+      const title = $('chatTitleInput').value.trim();
+
+      if (!title) throw new Error('Введи название чата');
+
+      currentChat = await api(
+        documentsPath(CONFIG.chatsId) + '/' +
+          encodeURIComponent(currentChat.$id),
+        'PATCH',
+        {
+          data: {
+            title,
+            isPrivate: $('privateCheckbox').checked
+          }
+        }
+      );
+
+      $('chatTitle').textContent = currentChat.title;
+      renderJoinRequests();
+      await loadChats();
+      status('Настройки чата сохранены');
+    });
+  });
+
+  $('leaveChatButton').addEventListener('click', () => {
+    if (!confirm('Выйти из этого чата?')) return;
+
+    action($('leaveChatButton'), async () => {
+      if (!currentChat) return;
+
+      if (isOwner(currentChat)) {
+        throw new Error('Владелец не может выйти из чата');
+      }
+
+      const members = Array.isArray(currentChat.memberIds)
+        ? currentChat.memberIds
+        : [];
+
+      await api(
+        documentsPath(CONFIG.chatsId) + '/' +
+          encodeURIComponent(currentChat.$id),
+        'PATCH',
+        {
+          data: {
+            memberIds: members.filter(id => id !== user.$id)
+          }
+        }
+      );
+
+      $('chatSettingsDialog').close();
+      currentChat = null;
+
+      $('chatTitle').textContent = 'Выберите чат';
+      $('chatIdLabel').textContent = '';
+      $('inviteButton').classList.add('hidden');
+      $('chatSettingsButton').classList.add('hidden');
+      $('messageForm').classList.add('hidden');
+      $('messages').replaceChildren();
+
+      await loadChats();
+      status('Ты вышел из чата');
+    });
+  });
 
   $('searchButton').addEventListener('click', () => {
     $('searchInput').value = '';
@@ -1254,13 +1483,45 @@ body.light .status.error {
 
       const members = Array.isArray(chat.memberIds) ? chat.memberIds : [];
 
-      if (!members.includes(user.$id)) {
-        chat = await api(
-          documentsPath(CONFIG.chatsId) + '/' + encodeURIComponent(chat.$id),
-          'PATCH',
-          { data: { memberIds: [...members, user.$id] } }
-        );
+      if (members.includes(user.$id)) {
+        $('joinDialog').close();
+        await loadChats();
+        await openChat(chat);
+        return;
       }
+
+      if (chat.isPrivate) {
+        const requests = Array.isArray(chat.joinRequests)
+          ? chat.joinRequests
+          : [];
+
+        if (!requests.includes(user.$id)) {
+          await api(
+            documentsPath(CONFIG.chatsId) + '/' +
+              encodeURIComponent(chat.$id),
+            'PATCH',
+            {
+              data: {
+                joinRequests: [...requests, user.$id]
+              }
+            }
+          );
+        }
+
+        $('joinDialog').close();
+        status('Заявка на вход отправлена. Ждём подтверждения владельца.');
+        return;
+      }
+
+      chat = await api(
+        documentsPath(CONFIG.chatsId) + '/' + encodeURIComponent(chat.$id),
+        'PATCH',
+        {
+          data: {
+            memberIds: [...members, user.$id]
+          }
+        }
+      );
 
       $('joinDialog').close();
       await loadChats();
