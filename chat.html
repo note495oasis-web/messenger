@@ -4,410 +4,1046 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>DataChats</title>
-<script src="https://unpkg.com/appwrite@16.0.2/dist/iife/sdk.js"></script>
+
 <style>
-*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:#f1f3f6;height:100vh;display:flex;flex-direction:column}.topbar{background:#202c3b;color:#fff;padding:12px 20px;font-size:20px;font-weight:bold;text-align:center}.app{flex:1;display:flex;min-height:0}.sidebar{width:280px;background:#202c3b;color:#fff;display:flex;flex-direction:column}.sidebar-header{padding:14px 16px;font-weight:bold;border-bottom:1px solid #33465d}.chat-list{flex:1;overflow-y:auto}.chat-item{padding:14px 16px;cursor:pointer;border-bottom:1px solid #2c3b4d}.chat-item:hover{background:#2c3b4d}.chat-item.active{background:#3b82f6}.sidebar-footer{padding:12px;display:flex;flex-direction:column;gap:8px}button{border:none;border-radius:8px;padding:10px;cursor:pointer;font-size:14px}.primary{background:#3b82f6;color:#fff}.secondary{background:#33465d;color:#fff}.main{flex:1;display:flex;flex-direction:column;min-width:0}.chat-header{background:#fff;padding:14px 20px;border-bottom:1px solid #ddd;display:flex;justify-content:space-between;align-items:center;gap:10px}.messages{flex:1;padding:20px;overflow-y:auto;display:flex;flex-direction:column;gap:10px}.message{max-width:75%;padding:10px 14px;border-radius:14px;background:#fff;align-self:flex-start;box-shadow:0 1px 2px rgba(0,0,0,.08);word-wrap:break-word}.message.own{background:#3b82f6;color:#fff;align-self:flex-end}.message .author{font-size:12px;opacity:.8;margin-bottom:4px}.message .delete{margin-left:8px;background:transparent;color:inherit;cursor:pointer;font-size:12px;padding:0}.composer{display:flex;gap:8px;padding:12px;background:#fff;border-top:1px solid #ddd}input{padding:12px;border:1px solid #ccc;border-radius:8px;font-size:14px;width:100%}.composer input{flex:1}.empty{margin:auto;color:#667;text-align:center}.modal{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center;z-index:10}.modal.open{display:flex}.modal-box{background:#fff;padding:20px;border-radius:12px;width:min(380px,92vw);display:flex;flex-direction:column;gap:10px}.auth-screen{flex:1;display:flex;align-items:center;justify-content:center;padding:20px}.auth-box{background:#fff;padding:24px;border-radius:14px;width:min(380px,94vw);display:flex;flex-direction:column;gap:10px;box-shadow:0 4px 20px rgba(0,0,0,.08)}.hidden{display:none!important}
+* {
+  box-sizing: border-box;
+}
+
+:root {
+  color-scheme: dark;
+  font-family: Arial, sans-serif;
+}
+
+body {
+  margin: 0;
+  background: #101621;
+  color: #edf2fb;
+}
+
+button, input {
+  font: inherit;
+}
+
+button {
+  border: 0;
+  border-radius: 10px;
+  padding: 11px 14px;
+  background: #33435c;
+  color: white;
+  cursor: pointer;
+}
+
+button:hover {
+  filter: brightness(1.12);
+}
+
+button:disabled {
+  opacity: .5;
+  cursor: wait;
+}
+
+input {
+  width: 100%;
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid #42516b;
+  border-radius: 10px;
+  background: #141e2e;
+  color: white;
+}
+
+.primary {
+  background: #3879f6;
+}
+
+.hidden {
+  display: none !important;
+}
+
+.topbar {
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 18px;
+  background: #192333;
+  border-bottom: 1px solid #30405a;
+}
+
+.brand {
+  font-size: 23px;
+  font-weight: bold;
+}
+
+.build {
+  font-size: 12px;
+  color: #9eafc9;
+}
+
+.status {
+  padding: 10px 16px;
+  background: #24334a;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.status.error {
+  background: #632e39;
+}
+
+.auth {
+  min-height: calc(100dvh - 56px);
+  display: grid;
+  place-items: center;
+  padding: 20px;
+}
+
+.card {
+  width: min(410px, 100%);
+  background: #1c283b;
+  padding: 25px;
+  border: 1px solid #34445e;
+  border-radius: 18px;
+}
+
+.card h1 {
+  margin-top: 0;
+}
+
+.stack {
+  display: grid;
+  gap: 12px;
+}
+
+.note {
+  color: #a8b7cd;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.app {
+  height: calc(100dvh - 56px);
+  display: flex;
+}
+
+.sidebar {
+  width: 270px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  background: #192333;
+  border-right: 1px solid #30405a;
+}
+
+.sidebar-head {
+  padding: 16px;
+  border-bottom: 1px solid #30405a;
+}
+
+.user {
+  margin-top: 8px;
+  font-size: 13px;
+  color: #a8b7cd;
+  overflow-wrap: anywhere;
+}
+
+.chats {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.chat-item {
+  width: 100%;
+  padding: 15px;
+  text-align: left;
+  border-radius: 0;
+  background: transparent;
+  border-bottom: 1px solid #2a3950;
+  overflow-wrap: anywhere;
+}
+
+.chat-item.active {
+  background: #305ca9;
+}
+
+.sidebar-actions {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+}
+
+.main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.chat-header {
+  padding: 14px;
+  min-height: 70px;
+  background: #1c283b;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.chat-title {
+  font-size: 18px;
+  overflow-wrap: anywhere;
+}
+
+.chat-id {
+  font-size: 12px;
+  color: #a8b7cd;
+  margin-top: 5px;
+  overflow-wrap: anywhere;
+}
+
+.messages {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.empty {
+  color: #a8b7cd;
+  text-align: center;
+  margin: auto;
+  padding: 20px;
+}
+
+.message {
+  max-width: 80%;
+  background: #24334b;
+  padding: 11px 14px;
+  border-radius: 14px;
+  align-self: flex-start;
+  overflow-wrap: anywhere;
+}
+
+.message.own {
+  background: #285db3;
+  align-self: flex-end;
+}
+
+.author, .time {
+  font-size: 12px;
+  color: #c4d1e7;
+}
+
+.author {
+  margin-bottom: 7px;
+}
+
+.message-text {
+  white-space: pre-wrap;
+}
+
+.message-footer {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-top: 8px;
+}
+
+.delete {
+  background: transparent;
+  padding: 0;
+  font-size: 12px;
+  text-decoration: underline;
+}
+
+.composer {
+  display: flex;
+  gap: 8px;
+  padding: 12px;
+  background: #1c283b;
+}
+
+.composer input {
+  flex: 1;
+}
+
+dialog {
+  width: min(420px, calc(100% - 28px));
+  color: #edf2fb;
+  background: #1c283b;
+  border: 1px solid #42516b;
+  border-radius: 16px;
+  padding: 22px;
+}
+
+dialog::backdrop {
+  background: #0009;
+}
+
+.dialog-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+@media (max-width: 650px) {
+  .sidebar {
+    width: 160px;
+  }
+
+  .sidebar-actions {
+    padding: 8px;
+  }
+
+  button {
+    font-size: 13px;
+    padding: 10px;
+  }
+
+  .messages {
+    padding: 10px;
+  }
+
+  .message {
+    max-width: 96%;
+  }
+
+  .chat-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .composer {
+    flex-wrap: wrap;
+    padding: 8px;
+  }
+
+  .composer button {
+    width: 100%;
+  }
+
+  .build {
+    display: none;
+  }
+}
 </style>
 </head>
+
 <body>
 
-<div class="topbar">DataChats</div>
+<header class="topbar">
+  <div class="brand">DataChats</div>
+  <div class="build">Версия REST-1</div>
+</header>
 
-<div class="auth-screen" id="authScreen">
-  <div class="auth-box">
-    <h2 style="margin:0">Вход в DataChats</h2>
-    <input id="email" type="email" placeholder="Email">
-    <input id="password" type="password" placeholder="Пароль">
-    <button class="primary" onclick="login()">Войти</button>
-    <button class="secondary" onclick="register()">Зарегистрироваться</button>
-    <button class="secondary" onclick="guestLogin()">Войти как гость</button>
+<div id="status" class="status hidden" role="status"></div>
+
+<section id="authScreen" class="auth">
+  <div class="card">
+    <h1>DataChats</h1>
+
+    <p class="note">
+      Зарегистрируйся, войди в аккаунт или продолжи как гость.
+    </p>
+
+    <form id="authForm" class="stack">
+      <input
+        id="nameInput"
+        placeholder="Имя для регистрации"
+        maxlength="64"
+        autocomplete="nickname"
+      >
+
+      <input
+        id="emailInput"
+        type="email"
+        placeholder="Email"
+        autocomplete="email"
+      >
+
+      <input
+        id="passwordInput"
+        type="password"
+        placeholder="Пароль — минимум 8 символов"
+        autocomplete="current-password"
+      >
+
+      <button id="loginButton" class="primary" type="submit">
+        Войти
+      </button>
+
+      <button id="registerButton" type="button">
+        Зарегистрироваться
+      </button>
+
+      <button id="guestButton" type="button">
+        Войти как гость
+      </button>
+    </form>
   </div>
-</div>
+</section>
 
-<div class="app hidden" id="appScreen">
+<section id="appScreen" class="app hidden">
   <aside class="sidebar">
-    <div class="sidebar-header">Мои чаты</div>
-    <div class="chat-list" id="chatList"></div>
-    <div class="sidebar-footer">
-      <button class="primary" onclick="openModal('createModal')">Создать чат</button>
-      <button class="secondary" id="joinByCodeBtn" onclick="openModal('joinByCodeModal')">Гостю: войти по коду</button>
-      <button class="secondary" id="joinByIdBtn" onclick="openModal('joinByIdModal')">Аккаунту: войти по ID чата</button>
-      <button class="secondary" onclick="logout()">Выйти</button>
+    <div class="sidebar-head">
+      Мои чаты
+      <div id="userLabel" class="user"></div>
+    </div>
+
+    <div id="chatList" class="chats"></div>
+
+    <div class="sidebar-actions">
+      <button id="createButton" class="primary">Создать чат</button>
+      <button id="joinButton">Присоединиться</button>
+      <button id="refreshButton">Обновить</button>
+      <button id="logoutButton">Выйти</button>
     </div>
   </aside>
 
   <main class="main">
-    <div class="chat-header">
-      <div id="chatTitle">Выберите чат</div>
-      <button class="secondary" id="inviteBtn" onclick="openModal('inviteModal')" style="display:none">Приглашение</button>
+    <header class="chat-header">
+      <div>
+        <div id="chatTitle" class="chat-title">Выберите чат</div>
+        <div id="chatIdLabel" class="chat-id"></div>
+      </div>
+
+      <button id="inviteButton" class="hidden">
+        Приглашение / ID
+      </button>
+    </header>
+
+    <div id="messages" class="messages">
+      <div class="empty">Создай чат или присоединись к существующему.</div>
     </div>
 
-    <div class="messages" id="messages"><div class="empty">Выберите чат слева</div></div>
-
-    <div class="composer hidden" id="composer">
-      <input id="textInput" placeholder="Сообщение..." onkeydown="if(event.key==='Enter') sendMessage()">
-      <button class="primary" onclick="sendMessage()">Отправить</button>
-    </div>
+    <form id="messageForm" class="composer hidden">
+      <input
+        id="messageInput"
+        placeholder="Сообщение…"
+        maxlength="2000"
+        autocomplete="off"
+      >
+      <button class="primary" type="submit">Отправить</button>
+    </form>
   </main>
-</div>
+</section>
 
-<div class="modal" id="createModal"><div class="modal-box"><h3>Новый чат</h3><input id="newChatTitle" placeholder="Название чата"><button class="primary" onclick="createChat()">Создать</button><button class="secondary" onclick="closeModals()">Отмена</button></div></div>
+<dialog id="createDialog">
+  <h2>Создать чат</h2>
+  <form id="createForm">
+    <input id="titleInput" placeholder="Название" maxlength="100" required>
+    <div class="dialog-actions">
+      <button class="primary" type="submit">Создать</button>
+      <button type="button" data-close>Отмена</button>
+    </div>
+  </form>
+</dialog>
 
-<div class="modal" id="joinByCodeModal"><div class="modal-box"><h3>Вход по коду приглашения</h3><input id="inviteInput" placeholder="Код приглашения"><button class="primary" onclick="joinByCode()">Войти</button><button class="secondary" onclick="closeModals()">Отмена</button></div></div>
+<dialog id="joinDialog">
+  <h2 id="joinTitle">Присоединиться</h2>
+  <form id="joinForm">
+    <input id="joinInput" placeholder="" required>
+    <div class="dialog-actions">
+      <button class="primary" type="submit">Войти</button>
+      <button type="button" data-close>Отмена</button>
+    </div>
+  </form>
+</dialog>
 
-<div class="modal" id="joinByIdModal"><div class="modal-box"><h3>Вход по ID чата</h3><input id="chatIdInput" placeholder="ID чата"><button class="primary" onclick="joinById()">Войти</button><button class="secondary" onclick="closeModals()">Отмена</button></div></div>
+<dialog id="inviteDialog">
+  <h2>Приглашение</h2>
 
-<div class="modal" id="inviteModal"><div class="modal-box"><h3>Код приглашения</h3><input id="inviteCode" readonly><button class="primary" onclick="copyInvite()">Скопировать</button><button class="secondary" onclick="closeModals()">Закрыть</button></div></div>
+  <div class="stack">
+    <label>
+      Код для гостя
+      <input id="inviteCodeInput" readonly>
+    </label>
+
+    <button id="copyCodeButton">Скопировать код</button>
+
+    <label>
+      ID для пользователя с аккаунтом
+      <input id="inviteIdInput" readonly>
+    </label>
+
+    <button id="copyIdButton">Скопировать ID</button>
+    <button data-close>Закрыть</button>
+  </div>
+</dialog>
 
 <script>
-const AppwriteSDK = Appwrite;
-const { Client, Databases, Account, ID, Query } = AppwriteSDK;
+(() => {
+  'use strict';
 
-const dataChatsClient = new Client()
-  .setEndpoint('https://cloud.appwrite.io/v1')
-  .setProject('6ad4dbfb00355225f62d');
+  // Здесь должны быть реальные ID из Appwrite, а не только названия.
+  const CONFIG = {
+    endpoint: 'https://cloud.appwrite.io/v1',
+    projectId: '6ad4dbfb00355225f62d',
+    databaseId: 'messenger',
+    chatsId: 'chats',
+    messagesId: 'messages'
+  };
 
-const dataChatsDatabases = new Databases(dataChatsClient);
-const dataChatsAccount = new Account(dataChatsClient);
+  const $ = id => document.getElementById(id);
 
-const DATABASE_ID = 'messenger';
-const CHATS_COLLECTION = 'chats';
-const MESSAGES_COLLECTION = 'messages';
+  let user = null;
+  let guest = false;
+  let currentChat = null;
+  let chatItems = [];
+  let timer = null;
+  let polling = false;
+  let messageVersion = '';
+  let sessionEpoch = 0;
 
-let currentUser = null;
-let isGuest = false;
-let currentChat = null;
-let chats = [];
-
-async function init() {
-  try {
-    currentUser = await dataChatsAccount.get();
-    isGuest = false;
-    showApp();
-    await loadChats();
-  } catch (e) {
-    showAuth();
-  }
-}
-
-function showAuth() {
-  document.getElementById('authScreen').classList.remove('hidden');
-  document.getElementById('appScreen').classList.add('hidden');
-}
-
-function showApp() {
-  document.getElementById('authScreen').classList.add('hidden');
-  document.getElementById('appScreen').classList.remove('hidden');
-  document.getElementById('joinByIdBtn').style.display = isGuest ? 'none' : 'block';
-  document.getElementById('joinByCodeBtn').style.display = isGuest ? 'block' : 'none';
-}
-
-async function register() {
-  const email = document.getElementById('email').value.trim();
-  const password = document.getElementById('password').value;
-
-  if (!email || password.length < 8) {
-    return alert('Введите email и пароль минимум из 8 символов');
+  function status(text, error = false) {
+    $('status').textContent = text;
+    $('status').classList.toggle('hidden', !text);
+    $('status').classList.toggle('error', error);
   }
 
-  try {
-    await dataChatsAccount.create(ID.unique(), email, password, email.split('@')[0]);
-    await dataChatsAccount.createEmailPasswordSession(email, password);
-    currentUser = await dataChatsAccount.get();
-    isGuest = false;
-    showApp();
-    await loadChats();
-  } catch (e) {
-    alert('Ошибка регистрации: ' + e.message);
-  }
-}
+  async function api(path, method = 'GET', body = undefined, queries = []) {
+    const url = new URL(CONFIG.endpoint.replace(/\/$/, '') + path);
 
-async function login() {
-  const email = document.getElementById('email').value.trim();
-  const password = document.getElementById('password').value;
-
-  try {
-    await dataChatsAccount.createEmailPasswordSession(email, password);
-    currentUser = await dataChatsAccount.get();
-    isGuest = false;
-    showApp();
-    await loadChats();
-  } catch (e) {
-    alert('Ошибка входа: ' + e.message);
-  }
-}
-
-async function guestLogin() {
-  try {
-    await dataChatsAccount.createAnonymousSession();
-    currentUser = await dataChatsAccount.get();
-    isGuest = true;
-    showApp();
-    await loadChats();
-  } catch (e) {
-    alert('Ошибка гостевого входа: ' + e.message);
-  }
-}
-
-async function logout() {
-  try {
-    await dataChatsAccount.deleteSession('current');
-  } catch (e) {}
-  location.reload();
-}
-
-async function loadChats() {
-  const res = await dataChatsDatabases.listDocuments(
-    DATABASE_ID,
-    CHATS_COLLECTION,
-    [Query.contains('memberIds', currentUser.$id)]
-  );
-
-  chats = res.documents;
-  renderChats();
-}
-
-function renderChats() {
-  const list = document.getElementById('chatList');
-  list.innerHTML = '';
-
-  if (!chats.length) {
-    list.innerHTML = '<div style="padding:16px;color:#9fb0c3">Чатов пока нет</div>';
-    return;
-  }
-
-  chats.forEach(chat => {
-    const div = document.createElement('div');
-    div.className = 'chat-item' + (currentChat && currentChat.$id === chat.$id ? ' active' : '');
-    div.textContent = chat.title;
-    div.onclick = () => openChat(chat);
-    list.appendChild(div);
-  });
-}
-
-async function createChat() {
-  const title = document.getElementById('newChatTitle').value.trim();
-  if (!title) return alert('Введите название чата');
-
-  const inviteCode = Math.random().toString(36).slice(2, 10).toUpperCase();
-
-  try {
-    const chat = await dataChatsDatabases.createDocument(
-      DATABASE_ID,
-      CHATS_COLLECTION,
-      ID.unique(),
-      {
-        title,
-        inviteCode,
-        ownerId: currentUser.$id,
-        memberIds: [currentUser.$id],
-        allowedUserIds: isGuest ? [] : [currentUser.$id]
-      }
-    );
-
-    document.getElementById('newChatTitle').value = '';
-    closeModals();
-    await loadChats();
-    openChat(chat);
-  } catch (e) {
-    alert('Ошибка создания чата: ' + e.message);
-  }
-}
-
-async function joinByCode() {
-  const code = document.getElementById('inviteInput').value.trim().toUpperCase();
-  if (!code) return;
-
-  try {
-    const res = await dataChatsDatabases.listDocuments(
-      DATABASE_ID,
-      CHATS_COLLECTION,
-      [Query.equal('inviteCode', code)]
-    );
-
-    if (!res.documents.length) {
-      return alert('Чат с таким кодом не найден');
+    for (const query of queries) {
+      url.searchParams.append('queries[]', JSON.stringify(query));
     }
 
-    const chat = res.documents[0];
+    let response;
 
-    if (!chat.memberIds.includes(currentUser.$id)) {
-      await dataChatsDatabases.updateDocument(
-        DATABASE_ID,
-        CHATS_COLLECTION,
-        chat.$id,
-        { memberIds: [...chat.memberIds, currentUser.$id] }
+    try {
+      response = await fetch(url.toString(), {
+        method,
+        credentials: 'include',
+        headers: {
+          'X-Appwrite-Project': CONFIG.projectId,
+          'Content-Type': 'application/json'
+        },
+        body: body === undefined ? undefined : JSON.stringify(body)
+      });
+    } catch (error) {
+      throw new Error(
+        'Не удалось подключиться к Appwrite. Проверь API Endpoint, ' +
+        'интернет и Web platform с hostname note495oasis-web.github.io.'
       );
     }
 
-    document.getElementById('inviteInput').value = '';
-    closeModals();
-    await loadChats();
-    openChat(chat);
-  } catch (e) {
-    alert('Ошибка входа по коду: ' + e.message);
+    const raw = await response.text();
+    let data = {};
+
+    if (raw) {
+      try {
+        data = JSON.parse(raw);
+      } catch {
+        throw new Error('Appwrite вернул неожиданный ответ: ' + response.status);
+      }
+    }
+
+    if (!response.ok) {
+      const error = new Error(
+        (data.message || response.statusText) + ' [HTTP ' + response.status + ']'
+      );
+      error.code = response.status;
+      error.type = data.type;
+      throw error;
+    }
+
+    return data;
   }
-}
 
-async function joinById() {
-  if (isGuest) {
-    return alert('Гость может входить только по коду приглашения');
+  function documentsPath(collectionId) {
+    return '/databases/' + encodeURIComponent(CONFIG.databaseId) +
+      '/collections/' + encodeURIComponent(collectionId) + '/documents';
   }
 
-  const chatId = document.getElementById('chatIdInput').value.trim();
-  if (!chatId) return;
+  function equal(attribute, value) {
+    return { method: 'equal', attribute, values: [value] };
+  }
 
-  try {
-    const chat = await dataChatsDatabases.getDocument(
-      DATABASE_ID,
-      CHATS_COLLECTION,
-      chatId
+  function limit(value) {
+    return { method: 'limit', values: [value] };
+  }
+
+  function newId() {
+    return crypto.randomUUID().replaceAll('-', '');
+  }
+
+  function inviteCode() {
+    const bytes = crypto.getRandomValues(new Uint8Array(12));
+    return Array.from(bytes, b => b.toString(16).padStart(2, '0'))
+      .join('').toUpperCase();
+  }
+
+  async function action(button, operation) {
+    if (button.disabled) return;
+    button.disabled = true;
+    status('');
+
+    try {
+      await operation();
+    } catch (error) {
+      console.error(error);
+      status(error.message, true);
+    } finally {
+      button.disabled = false;
+    }
+  }
+
+  async function enterApp(account) {
+    user = account;
+    guest = !account.email;
+    sessionEpoch++;
+
+    $('authScreen').classList.add('hidden');
+    $('appScreen').classList.remove('hidden');
+    $('passwordInput').value = '';
+
+    $('userLabel').textContent = guest
+      ? 'Гость ' + user.$id.slice(0, 6)
+      : (user.name || user.email);
+
+    $('joinButton').textContent = guest
+      ? 'По приглашению'
+      : 'По ID чата';
+
+    clearInterval(timer);
+
+    timer = setInterval(async () => {
+      if (!currentChat || document.hidden || polling) return;
+      polling = true;
+
+      try {
+        await loadMessages();
+      } catch (error) {
+        console.error('Обновление сообщений:', error);
+      } finally {
+        polling = false;
+      }
+    }, 4000);
+
+    try {
+      await loadChats();
+    } catch (error) {
+      console.error(error);
+      status('Вход выполнен, но чаты не загрузились: ' + error.message, true);
+    }
+  }
+
+  async function loadChats() {
+    // equal с массивным атрибутом ищет документы, содержащие этот ID.
+    const data = await api(
+      documentsPath(CONFIG.chatsId),
+      'GET',
+      undefined,
+      [equal('memberIds', user.$id), limit(100)]
     );
 
-    const allowed =
-      chat.allowedUserIds.includes(currentUser.$id) ||
-      chat.memberIds.includes(currentUser.$id);
-
-    if (!allowed) {
-      return alert('Вас не добавили в этот чат');
-    }
-
-    if (!chat.memberIds.includes(currentUser.$id)) {
-      await dataChatsDatabases.updateDocument(
-        DATABASE_ID,
-        CHATS_COLLECTION,
-        chat.$id,
-        { memberIds: [...chat.memberIds, currentUser.$id] }
-      );
-    }
-
-    document.getElementById('chatIdInput').value = '';
-    closeModals();
-    await loadChats();
-    openChat(chat);
-  } catch (e) {
-    alert('Чат не найден или нет доступа');
+    chatItems = data.documents || [];
+    renderChats();
   }
-}
 
-async function openChat(chat) {
-  currentChat = chat;
-  renderChats();
+  function renderChats() {
+    $('chatList').replaceChildren();
 
-  document.getElementById('chatTitle').textContent = chat.title;
-  document.getElementById('inviteBtn').style.display = 'block';
-  document.getElementById('composer').classList.remove('hidden');
-  document.getElementById('inviteCode').value = chat.inviteCode;
-
-  await loadMessages();
-}
-
-async function loadMessages() {
-  if (!currentChat) return;
-
-  const res = await dataChatsDatabases.listDocuments(
-    DATABASE_ID,
-    MESSAGES_COLLECTION,
-    [
-      Query.equal('roomId', currentChat.$id),
-      Query.orderAsc('$createdAt'),
-      Query.limit(100)
-    ]
-  );
-
-  const box = document.getElementById('messages');
-  box.innerHTML = '';
-
-  res.documents.forEach(msg => {
-    const div = document.createElement('div');
-    div.className = 'message' + (msg.senderId === currentUser.$id ? ' own' : '');
-
-    const author = document.createElement('div');
-    author.className = 'author';
-    author.textContent = msg.senderId === currentUser.$id
-      ? 'Вы'
-      : (msg.senderName || 'Гость');
-    div.appendChild(author);
-
-    const text = document.createElement('div');
-    text.textContent = msg.text;
-    div.appendChild(text);
-
-    if (msg.senderId === currentUser.$id) {
-      const del = document.createElement('button');
-      del.className = 'delete';
-      del.textContent = 'Удалить';
-      del.onclick = () => deleteMessage(msg.$id);
-      div.appendChild(del);
+    if (!chatItems.length) {
+      const empty = document.createElement('p');
+      empty.className = 'note';
+      empty.style.padding = '14px';
+      empty.textContent = 'Чатов пока нет';
+      $('chatList').append(empty);
+      return;
     }
 
-    box.appendChild(div);
+    for (const chat of chatItems) {
+      const button = document.createElement('button');
+      button.className = 'chat-item';
+      button.classList.toggle('active', currentChat?.$id === chat.$id);
+      button.textContent = chat.title;
+
+      button.addEventListener('click', () => {
+        action(button, () => openChat(chat));
+      });
+
+      $('chatList').append(button);
+    }
+  }
+
+  async function openChat(chat) {
+    currentChat = chat;
+    messageVersion = '';
+
+    $('chatTitle').textContent = chat.title;
+    $('chatIdLabel').textContent = 'ID: ' + chat.$id;
+    $('inviteButton').classList.remove('hidden');
+    $('messageForm').classList.remove('hidden');
+    $('messages').replaceChildren();
+
+    renderChats();
+    await loadMessages();
+  }
+
+  async function loadMessages(force = false) {
+    if (!currentChat || !user) return;
+
+    const roomId = currentChat.$id;
+    const epoch = sessionEpoch;
+
+    const data = await api(
+      documentsPath(CONFIG.messagesId),
+      'GET',
+      undefined,
+      [
+        equal('roomId', roomId),
+        { method: 'orderDesc', attribute: '$createdAt' },
+        limit(100)
+      ]
+    );
+
+    if (epoch !== sessionEpoch || currentChat?.$id !== roomId) return;
+
+    const messages = (data.documents || []).reverse();
+
+    const version = JSON.stringify(
+      messages.map(message => [message.$id, message.$updatedAt])
+    );
+
+    if (!force && version === messageVersion) return;
+
+    messageVersion = version;
+
+    const box = $('messages');
+    const nearBottom =
+      box.scrollHeight - box.scrollTop - box.clientHeight < 120;
+
+    box.replaceChildren();
+
+    if (!messages.length) {
+      const empty = document.createElement('div');
+      empty.className = 'empty';
+      empty.textContent = 'Сообщений пока нет. Напиши первым!';
+      box.append(empty);
+      return;
+    }
+
+    for (const message of messages) {
+      const own = message.senderId === user.$id;
+      const item = document.createElement('div');
+      item.className = 'message' + (own ? ' own' : '');
+
+      const author = document.createElement('div');
+      author.className = 'author';
+      author.textContent = own ? 'Вы' : (message.senderName || 'Пользователь');
+
+      const text = document.createElement('div');
+      text.className = 'message-text';
+      text.textContent = message.text;
+
+      const footer = document.createElement('div');
+      footer.className = 'message-footer';
+
+      const time = document.createElement('span');
+      time.className = 'time';
+      time.textContent = new Date(message.$createdAt).toLocaleTimeString(
+        'ru-RU',
+        { hour: '2-digit', minute: '2-digit' }
+      );
+
+      footer.append(time);
+
+      if (own) {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'delete';
+        button.textContent = 'Удалить';
+
+        button.addEventListener('click', () => {
+          if (!confirm('Удалить это сообщение?')) return;
+
+          action(button, async () => {
+            if (message.senderId !== user.$id) {
+              throw new Error('Можно удалять только свои сообщения');
+            }
+
+            await api(
+              documentsPath(CONFIG.messagesId) + '/' +
+                encodeURIComponent(message.$id),
+              'DELETE'
+            );
+
+            await loadMessages(true);
+          });
+        });
+
+        footer.append(button);
+      }
+
+      item.append(author, text, footer);
+      box.append(item);
+    }
+
+    if (force || nearBottom) {
+      box.scrollTop = box.scrollHeight;
+    }
+  }
+
+  $('authForm').addEventListener('submit', event => {
+    event.preventDefault();
+
+    action($('loginButton'), async () => {
+      const email = $('emailInput').value.trim();
+      const password = $('passwordInput').value;
+
+      if (!email || !password) {
+        throw new Error('Введи email и пароль');
+      }
+
+      await api('/account/sessions/email', 'POST', { email, password });
+      await enterApp(await api('/account'));
+    });
   });
 
-  box.scrollTop = box.scrollHeight;
-}
+  $('registerButton').addEventListener('click', () => {
+    action($('registerButton'), async () => {
+      if (!$('emailInput').reportValidity()) return;
 
-async function sendMessage() {
-  const input = document.getElementById('textInput');
-  const text = input.value.trim();
+      const email = $('emailInput').value.trim();
+      const password = $('passwordInput').value;
+      const name = $('nameInput').value.trim() || email.split('@')[0];
 
-  if (!text || !currentChat) return;
-
-  try {
-    await dataChatsDatabases.createDocument(
-      DATABASE_ID,
-      MESSAGES_COLLECTION,
-      ID.unique(),
-      {
-        roomId: currentChat.$id,
-        senderId: currentUser.$id,
-        senderName: isGuest
-          ? 'Гость ' + currentUser.$id.slice(0, 5)
-          : (currentUser.name || currentUser.email.split('@')[0]),
-        text
+      if (!email || password.length < 8) {
+        throw new Error('Нужны email и пароль минимум из 8 символов');
       }
-    );
 
-    input.value = '';
-    await loadMessages();
-  } catch (e) {
-    alert('Ошибка отправки: ' + e.message);
+      await api('/account', 'POST', {
+        userId: newId(),
+        email,
+        password,
+        name
+      });
+
+      await api('/account/sessions/email', 'POST', { email, password });
+      await enterApp(await api('/account'));
+    });
+  });
+
+  $('guestButton').addEventListener('click', () => {
+    action($('guestButton'), async () => {
+      await api('/account/sessions/anonymous', 'POST', {});
+      await enterApp(await api('/account'));
+    });
+  });
+
+  $('logoutButton').addEventListener('click', () => {
+    action($('logoutButton'), async () => {
+      await api('/account/sessions/current', 'DELETE');
+
+      clearInterval(timer);
+      sessionEpoch++;
+      user = null;
+      currentChat = null;
+      chatItems = [];
+      messageVersion = '';
+
+      $('appScreen').classList.add('hidden');
+      $('authScreen').classList.remove('hidden');
+      $('messageForm').classList.add('hidden');
+      $('inviteButton').classList.add('hidden');
+      $('messages').replaceChildren();
+      $('chatTitle').textContent = 'Выберите чат';
+      $('chatIdLabel').textContent = '';
+
+      status('Ты вышел. У гостя без привязанного аккаунта доступ к прежней сессии не восстановится.');
+    });
+  });
+
+  $('createButton').addEventListener('click', () => {
+    $('createDialog').showModal();
+  });
+
+  $('createForm').addEventListener('submit', event => {
+    event.preventDefault();
+    const button = event.submitter;
+
+    action(button, async () => {
+      const title = $('titleInput').value.trim();
+
+      if (!title) throw new Error('Введи название чата');
+
+      const chat = await api(
+        documentsPath(CONFIG.chatsId),
+        'POST',
+        {
+          documentId: newId(),
+          data: {
+            title,
+            inviteCode: inviteCode(),
+            ownerId: user.$id,
+            memberIds: [user.$id],
+            allowedUserIds: []
+          },
+          permissions: []
+        }
+      );
+
+      $('createDialog').close();
+      $('titleInput').value = '';
+
+      await loadChats();
+      await openChat(chat);
+    });
+  });
+
+  $('joinButton').addEventListener('click', () => {
+    $('joinTitle').textContent = guest
+      ? 'Вход по приглашению'
+      : 'Вход по ID чата';
+
+    $('joinInput').placeholder = guest ? 'Код приглашения' : 'ID чата';
+    $('joinInput').value = '';
+    $('joinDialog').showModal();
+  });
+
+  $('joinForm').addEventListener('submit', event => {
+    event.preventDefault();
+
+    action(event.submitter, async () => {
+      const value = $('joinInput').value.trim();
+
+      if (!value) throw new Error('Заполни поле');
+
+      let chat;
+
+      if (guest) {
+        const data = await api(
+          documentsPath(CONFIG.chatsId),
+          'GET',
+          undefined,
+          [equal('inviteCode', value.toUpperCase()), limit(1)]
+        );
+
+        chat = data.documents?.[0];
+
+        if (!chat) throw new Error('Приглашение не найдено');
+      } else {
+        chat = await api(
+          documentsPath(CONFIG.chatsId) + '/' + encodeURIComponent(value)
+        );
+      }
+
+      const members = Array.isArray(chat.memberIds) ? chat.memberIds : [];
+
+      if (!members.includes(user.$id)) {
+        chat = await api(
+          documentsPath(CONFIG.chatsId) + '/' + encodeURIComponent(chat.$id),
+          'PATCH',
+          { data: { memberIds: [...members, user.$id] } }
+        );
+      }
+
+      $('joinDialog').close();
+      await loadChats();
+      await openChat(chat);
+    });
+  });
+
+  $('messageForm').addEventListener('submit', event => {
+    event.preventDefault();
+
+    action(event.submitter, async () => {
+      if (!currentChat || !user) return;
+
+      const text = $('messageInput').value.trim();
+
+      if (!text) return;
+
+      const roomId = currentChat.$id;
+
+      await api(
+        documentsPath(CONFIG.messagesId),
+        'POST',
+        {
+          documentId: newId(),
+          data: {
+            roomId,
+            senderId: user.$id,
+            senderName: guest
+              ? 'Гость ' + user.$id.slice(0, 6)
+              : (user.name || 'Пользователь'),
+            text
+          },
+          permissions: [
+            'delete("user:' + user.$id + '")'
+          ]
+        }
+      );
+
+      if ($('messageInput').value.trim() === text) {
+        $('messageInput').value = '';
+      }
+
+      if (currentChat?.$id === roomId) {
+        await loadMessages(true);
+      }
+    });
+  });
+
+  $('inviteButton').addEventListener('click', () => {
+    if (!currentChat) return;
+
+    $('inviteCodeInput').value = currentChat.inviteCode;
+    $('inviteIdInput').value = currentChat.$id;
+    $('inviteDialog').showModal();
+  });
+
+  async function copyField(id) {
+    try {
+      await navigator.clipboard.writeText($(id).value);
+      status('Скопировано');
+    } catch {
+      $(id).focus();
+      $(id).select();
+      status('Выделил текст. Нажми Ctrl+C или скопируй вручную.');
+    }
   }
-}
 
-async function deleteMessage(id) {
-  if (!confirm('Удалить это сообщение?')) return;
+  $('copyCodeButton').addEventListener('click', () => copyField('inviteCodeInput'));
+  $('copyIdButton').addEventListener('click', () => copyField('inviteIdInput'));
 
-  try {
-    await dataChatsDatabases.deleteDocument(
-      DATABASE_ID,
-      MESSAGES_COLLECTION,
-      id
-    );
-    await loadMessages();
-  } catch (e) {
-    alert('Не удалось удалить сообщение');
+  $('refreshButton').addEventListener('click', () => {
+    action($('refreshButton'), async () => {
+      await loadChats();
+      if (currentChat) await loadMessages(true);
+    });
+  });
+
+  document.querySelectorAll('[data-close]').forEach(button => {
+    button.addEventListener('click', () => button.closest('dialog').close());
+  });
+
+  async function init() {
+    status('Проверяю сессию…');
+
+    try {
+      const account = await api('/account');
+      status('');
+      await enterApp(account);
+    } catch (error) {
+      if (error.code === 401) {
+        status('');
+      } else {
+        console.error(error);
+        status(error.message, true);
+      }
+    }
   }
-}
 
-function openModal(id) {
-  document.getElementById(id).classList.add('open');
-}
-
-function closeModals() {
-  document.querySelectorAll('.modal').forEach(m => m.classList.remove('open'));
-}
-
-function showInvite() {
-  openModal('inviteModal');
-}
-
-function copyInvite() {
-  navigator.clipboard.writeText(document.getElementById('inviteCode').value);
-  alert('Код скопирован');
-}
-
-init();
+  init();
+})();
 </script>
+
 </body>
 </html>
