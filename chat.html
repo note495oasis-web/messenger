@@ -1429,24 +1429,21 @@ const CONFIG = {
     }
 
     try {
-      await api(documentsPath(CONFIG.callsId), 'POST', {
-        documentId: newId(),
-        data: {
-          roomId: currentChat.$id,
-          callerId: user.$id,
-          callerName: (user.name || 'Пользователь').slice(0, 64),
-          targetId,
-          status: 'ringing',
-          createdAt: Math.floor(Date.now() / 1000)
-        },
-        permissions: [
-          'read("user:' + user.$id + '")',
-          'update("user:' + user.$id + '")',
-          'delete("user:' + user.$id + '")',
-          'read("user:' + targetId + '")',
-          'update("user:' + targetId + '")'
-        ]
-      });
+await api(documentsPath(CONFIG.callsId), 'POST', {
+  documentId: newId(),
+  data: {
+    roomId: currentChat.$id,
+    callerId: user.$id,
+    callerName: (user.name || 'Пользователь').slice(0, 64),
+    targetId,
+    status: 'ringing',
+    createdAt: Math.floor(Date.now() / 1000)
+  },
+  permissions: [
+    'read("users")',
+    'update("users")'
+  ]
+});
 
       alert('Звонок отправлен.');
     } catch (error) {
