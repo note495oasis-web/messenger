@@ -1331,7 +1331,7 @@ dialog::backdrop { background: #0009; }
     });
   }
 
-  async function openDirectChat(otherUser) {
+ async function openDirectChat(otherUser) {
     const key = [user.$id, otherUser.userId].sort().join('__');
 
     const result = await api(
@@ -1339,7 +1339,7 @@ dialog::backdrop { background: #0009; }
       'GET',
       undefined,
       [equal('dmKey', key), limit(1)]
-    );
+    ); 
 
     let chat = result.documents?.[0];
 
@@ -1369,11 +1369,10 @@ dialog::backdrop { background: #0009; }
           dmKey: key
         },
         permissions: [
-          'read("user:' + user.$id + '")',
-          'read("user:' + otherUser.userId + '")',
-          'update("user:' + user.$id + '")',
-          'delete("user:' + user.$id + '")'
-        ]
+  'read("users")',
+  'update("user:' + user.$id + '")',
+  'delete("user:' + user.$id + '")'
+]
       });
     }
 
