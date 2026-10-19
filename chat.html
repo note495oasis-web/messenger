@@ -1843,52 +1843,45 @@ dialog::backdrop { background: #0009; }
     });
   });
 
-  $('messageForm').addEventListener('submit', event => {
-    event.preventDefault();
+$('messageForm').addEventListener('submit', event => {
+  event.preventDefault();
 
-    action(event.submitter, async () => {
-      if (!user || !currentChat) return;
+  action(event.submitter, async () => {
+    if (!user || !currentChat) return;
 
-      const chat = currentChat;
-      const text = $('messageInput').value.trim();
-      if (!text) return;
+    const chat = currentChat;
+    const text = $('messageInput').value.trim();
+    if (!text) return;
 
-      const permissions = [
-  'delete("user:' + user.$id + '")',
-  'read("users")'
-];
+    const permissions = [
+      'delete("user:' + user.$id + '")',
+      'read("users")'
+    ];
 
-      if (isGeneral(chat)) {
-        permissions.push('read("users")');
-      } else {
-        for (const id of [...new Set(membersOf(chat))]) {
-          permissions.push('read("user:' + id + '")');
-        }
-      }
-
-      await api(documentsPath(CONFIG.messagesId), 'POST', {
-        documentId: newId(),
-        data: {
-          roomId: chat.$id,
-          senderId: user.$id,
-          senderName: (
-            guest
-              ? 'Гость ' + user.$id.slice(0, 6)
-              : (user.name || 'Пользователь')
-          ).slice(0, 64),
-          text
-        },
-        permissions
-      });
-
-      if ($('messageInput').value.trim() === text) {
-        $('messageInput').value = '';
-      }
-
-      if (currentChat?.$id === chat.$id) await loadMessages(true);
+    await api(documentsPath(CONFIG.messagesId), 'POST', {
+      documentId: newId(),
+      data: {
+        roomId: chat.$id,
+        senderId: user.$id,
+        senderName: (
+          guest
+            ? 'Гость'
+            : (user.name || 'Пользователь')
+        ).slice(0, 64),
+        text
+      },
+      permissions
     });
-  });
 
+    if ($('messageInput').value.trim() === text) {
+      $('messageInput').value = '';
+    }
+
+    if (currentChat?.$id === chat.$id) {
+      await loadMessages(true);
+    }
+  });
+});
   $('inviteButton').addEventListener('click', () => {
     if (!currentChat || isDirect(currentChat)) return;
 
