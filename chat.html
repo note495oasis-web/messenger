@@ -46,10 +46,55 @@
   --error: #f7d9dd;
 }
 
+:root.dark-purple {
+  color-scheme: dark;
+
+  --bg: #170d29;
+  --panel: #221438;
+  --card: #271844;
+  --input: #1d1133;
+  --border: #4b3177;
+  --text: #edf2fb;
+  --muted: #b3a3d1;
+  --button: #4b3177;
+  --active: #432a74;
+  --message: #2c1b4d;
+  --own: #5b2fa8;
+  --status: #251640;
+  --error: #632e39;
+}
+
+:root.dark-gradient {
+  color-scheme: dark;
+
+  --panel: #0a1220;
+  --card: #0d1728;
+  --input: #091120;
+  --border: #22406e;
+  --text: #edf2fb;
+  --muted: #9db4d4;
+  --button: #173f80;
+  --active: #173f80;
+  --message: #11223c;
+  --own: #1450b8;
+  --status: #0b1526;
+  --error: #632e39;
+}
+
 body {
   margin: 0;
   color: var(--text);
   background: var(--bg);
+}
+
+:root.dark-gradient body {
+  background: linear-gradient(
+    180deg,
+    #000000 0%,
+    #071631 55%,
+    #0f3a8f 100%
+  );
+  background-attachment: fixed;
 }
 
 button, input { font: inherit; }
@@ -319,6 +364,31 @@ dialog::backdrop { background: #0009; }
 
 .request-item span { min-width: 0; }
 
+.profile-settings {
+  display: grid;
+  gap: 12px;
+}
+
+.avatar-row {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+}
+
+.avatar {
+  width: 72px;
+  height: 72px;
+  flex-shrink: 0;
+  object-fit: cover;
+  border-radius: 50%;
+  background: var(--input);
+  border: 1px solid var(--border);
+}
+
+.file-row {
+  display: block;
+}
+
 @media (max-width: 650px) {
   .sidebar { width: 160px; }
   .sidebar.closed { margin-left: -160px; }
@@ -338,7 +408,7 @@ dialog::backdrop { background: #0009; }
 <body>
 <header class="topbar">
   <div class="brand">DataChats</div>
-  <div class="build">REST-9 · Session fallback</div>
+  <div class="build">REST-10 · Profile and themes</div>
 </header>
 
 <div id="status" class="status hidden" role="status"></div>
@@ -459,8 +529,43 @@ dialog::backdrop { background: #0009; }
 
 <dialog id="settingsDialog">
   <h2>Настройки</h2>
+
   <div class="stack">
+    <div id="profileSettings" class="profile-settings hidden">
+      <div class="avatar-row">
+        <img id="avatarPreview" class="avatar" alt="Аватар">
+        <div class="stack">
+          <label class="note">
+            Имя
+            <input id="nameSettingsInput" maxlength="64">
+          </label>
+          <button id="saveNameButton" class="primary" type="button">
+            Сохранить имя
+          </button>
+        </div>
+      </div>
+
+      <label class="file-row">
+        <input id="avatarInput" type="file" accept="image/*" class="hidden">
+        <button id="avatarButton" type="button">Изменить аватар</button>
+      </label>
+    </div>
+
+    <div id="guestProfileNote" class="note hidden">
+      Аватар и изменение имени доступны после входа в аккаунт.
+    </div>
+
     <button id="themeButton">Светлая тема</button>
+
+    <div id="darkStyleControls" class="stack hidden">
+      <button id="purpleThemeButton" type="button">
+        Фиолетовая тёмная тема
+      </button>
+      <button id="gradientThemeButton" type="button">
+        Чёрно-синий градиент
+      </button>
+    </div>
+
     <button id="sidebarSettingsButton">Скрыть чаты</button>
     <button type="button" data-close>Закрыть</button>
   </div>
@@ -570,8 +675,8 @@ dialog::backdrop { background: #0009; }
     messagesId: 'messages',
     usersId: 'users',
     generalChatId: 'general',
+    avatarBucketId: 'avatars',
 
-    // Берём реальный адрес открытого HTML, включая путь репозитория.
     recoveryUrl: location.origin + location.pathname
   };
 
@@ -754,11 +859,110 @@ dialog::backdrop { background: #0009; }
     }
   }
 
-  function applyTheme(theme) {
+  function applyTheme(theme, darkStyle) {
     const light = theme === 'light';
-    document.documentElement.classList.toggle('light', light);
+    const root = document.documentElement;
+
+    root.classList.toggle('light', light);
+    root.classList.toggle('dark-purple', !light && darkStyle === 'purple');
+    root.classList.toggle('dark-gradient', !light && darkStyle === 'gradient');
+
     writeStorage('datachats-theme', light ? 'light' : 'dark');
+    writeStorage('datachats-dark-style', darkStyle || 'purple');
+
     $('themeButton').textContent = light ? 'Тёмная тема' : 'Светлая тема';
+    $('darkStyleControls').classList.toggle('hidden', light);
+  }
+
+  function updateSettingsProfile() {
+    const authorized = !!user && !guest;
+
+    $('profileSettings').classList.toggle('hidden', !authorized);
+    $('guestProfileNote').classList.toggle('hidden', authorized);
+
+    if (!authorized) {
+      $('nameSettingsInput').value = '';
+      $('avatarPreview').removeAttribute('src');
+      return;
+    }
+
+    $('nameSettingsInput').value = user.name || '';
+
+    if (user.avatarId) {
+      $('avatarPreview').src =
+        CONFIG.endpoint +
+        '/storage/buckets/' + CONFIG.avatarBucketId +
+        '/files/' + user.avatarId + '/preview?project=' +
+        CONFIG.projectId + '&width=200&height=200';
+    } else {
+      $('avatarPreview').removeAttribute('src');
+    }
+  }
+
+  async function saveProfileName() {
+    const name = $('nameSettingsInput').value.trim() || 'Пользователь';
+
+    const updated = await api(
+      documentPath(CONFIG.usersId, user.$id),
+      'PATCH',
+      { data: { name: name.slice(0, 64) } }
+    );
+
+    user.name = updated.name;
+    $('userLabel').textContent = user.name || user.email;
+
+    status('Имя сохранено');
+  }
+
+  async function uploadAvatar(file) {
+    if (!user || guest) {
+      throw new Error('Аватар доступен только авторизованным пользователям');
+    }
+
+    if (!file.type.startsWith('image/')) {
+      throw new Error('Выбери изображение');
+    }
+
+    if (file.size > 2 * 1024 * 1024) {
+      throw new Error('Файл больше 2 MB');
+    }
+
+    const form = new FormData();
+    form.append('fileId', newId());
+    form.append('file', file);
+
+    const response = await fetch(
+      CONFIG.endpoint +
+      '/storage/buckets/' + CONFIG.avatarBucketId + '/files',
+      {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'X-Appwrite-Project': CONFIG.projectId,
+          'X-Fallback-Cookies': readStorage(sessionStorageKey) || ''
+        },
+        body: form
+      }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        (data.message || 'Не удалось загрузить аватар') +
+        ' [HTTP ' + response.status + ']'
+      );
+    }
+
+    await api(
+      documentPath(CONFIG.usersId, user.$id),
+      'PATCH',
+      { data: { avatarId: data.$id } }
+    );
+
+    user.avatarId = data.$id;
+    updateSettingsProfile();
+    status('Аватар обновлён');
   }
 
   function applySidebar(open) {
@@ -869,6 +1073,7 @@ dialog::backdrop { background: #0009; }
     $('myIdInput').value = user.$id;
     $('joinButton').textContent = guest ? 'По приглашению' : 'По ID чата';
 
+    updateSettingsProfile();
     closeChat();
 
     const warnings = [];
@@ -1542,8 +1747,6 @@ dialog::backdrop { background: #0009; }
 
       const chatId = chat.$id;
 
-      // Сначала удаляем сам чат, чтобы при отсутствии прав
-      // не удалить сообщения из остающегося чата.
       await api(documentPath(CONFIG.chatsId, chatId), 'DELETE');
 
       closeChat();
@@ -1578,8 +1781,6 @@ dialog::backdrop { background: #0009; }
           const message = batch[index];
           const last = index === batch.length - 1;
 
-          // Последний документ страницы временно оставляем,
-          // чтобы сохранить действующий курсор.
           if (last) continue;
 
           try {
@@ -1593,7 +1794,6 @@ dialog::backdrop { background: #0009; }
 
         const lastMessage = batch[batch.length - 1];
 
-        // Следующую страницу получаем до удаления документа-курсора.
         const next = await api(
           documentsPath(CONFIG.messagesId),
           'GET',
@@ -1705,13 +1905,46 @@ dialog::backdrop { background: #0009; }
   $('copyIdButton').addEventListener('click', () => copyField('inviteIdInput'));
 
   $('settingsButton').addEventListener('click', () => {
+    updateSettingsProfile();
     $('settingsDialog').showModal();
   });
 
   $('themeButton').addEventListener('click', () => {
+    const light = document.documentElement.classList.contains('light');
+
     applyTheme(
-      document.documentElement.classList.contains('light') ? 'dark' : 'light'
+      light ? 'dark' : 'light',
+      readStorage('datachats-dark-style') || 'purple'
     );
+  });
+
+  $('purpleThemeButton').addEventListener('click', () => {
+    applyTheme('dark', 'purple');
+  });
+
+  $('gradientThemeButton').addEventListener('click', () => {
+    applyTheme('dark', 'gradient');
+  });
+
+  $('avatarButton').addEventListener('click', () => {
+    if (!user || guest) {
+      status('Аватар доступен только после входа', true);
+      return;
+    }
+
+    $('avatarInput').click();
+  });
+
+  $('avatarInput').addEventListener('change', event => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    action($('avatarButton'), () => uploadAvatar(file));
+    event.target.value = '';
+  });
+
+  $('saveNameButton').addEventListener('click', event => {
+    action(event.currentTarget, saveProfileName);
   });
 
   $('sidebarToggle').addEventListener('click', toggleSidebar);
@@ -1797,7 +2030,10 @@ dialog::backdrop { background: #0009; }
   });
 
   async function init() {
-    applyTheme(readStorage('datachats-theme') || 'dark');
+    applyTheme(
+      readStorage('datachats-theme') || 'dark',
+      readStorage('datachats-dark-style') || 'purple'
+    );
 
     applySidebar(
       (readStorage('datachats-sidebar') || 'open') === 'open'
