@@ -677,18 +677,19 @@ dialog::backdrop { background: #0009; }
 (() => {
   'use strict';
 
-  const CONFIG = {
-    endpoint: 'https://fra.cloud.appwrite.io/v1',
-    projectId: '6ad4dbfb00355225f62d',
-    databaseId: 'messenger',
-    chatsId: 'chats',
-    messagesId: 'messages',
-    usersId: 'users',
-    generalChatId: 'general',
-    avatarBucketId: 'avatars',
+const CONFIG = {
+  endpoint: 'https://fra.cloud.appwrite.io/v1',
+  projectId: '6ad4dbfb00355225f62d',
+  databaseId: 'messenger',
+  chatsId: 'chats',
+  messagesId: 'messages',
+  callsId: 'calls',
+  usersId: 'users',
+  generalChatId: 'general',
+  avatarBucketId: 'avatars',
 
-    recoveryUrl: location.origin + location.pathname
-  };
+  recoveryUrl: location.origin + location.pathname
+};
 
   const $ = id => document.getElementById(id);
   const sessionStorageKey = 'datachats-session-' + CONFIG.projectId;
