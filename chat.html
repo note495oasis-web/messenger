@@ -684,6 +684,7 @@ const CONFIG = {
   chatsId: 'chats',
   messagesId: 'messages',
   callsId: 'calls',
+  callsignalsId: 'callsignals',
   usersId: 'users',
   generalChatId: 'general',
   avatarBucketId: 'avatars',
@@ -1319,8 +1320,20 @@ const CONFIG = {
 
     if (force || nearBottom) box.scrollTop = box.scrollHeight;
   }
-    let incomingCall = null;
+  let incomingCall = null;
+  let currentCall = null;
   let callPollingStarted = false;
+  let peerConnection = null;
+  let localStream = null;
+  let remoteAudio = null;
+  let pendingCandidates = [];
+  let processedSignals = new Set();
+
+  const RTC_CONFIG = {
+    iceServers: [
+      { urls: 'stun:stun.l.google.com:19302' }
+    ]
+  };
 
   function ensureCallOverlay() {
     if ($('callOverlay')) return;
@@ -1351,41 +1364,29 @@ const CONFIG = {
 
     document.body.appendChild(overlay);
 
-    $('acceptCall').addEventListener('click', async () => {
+    $('acceptCall').addEventListener('click', () => {
       if (!incomingCall) return;
       const call = incomingCall;
-
-      try {
-        await api(
-          documentsPath(CONFIG.callsId) + '/' + call.$id,
-          'PATCH',
-          { data: { status: 'accepted' } }
-        );
-
-        incomingCall = null;
-        $('callOverlay').style.display = 'none';
-        alert('Звонок принят. Звук подключим на следующем шаге.');
-      } catch (error) {
-        alert('Не удалось принять звонок: ' + error.message);
-      }
+      incomingCall = null;
+      $('callOverlay').style.display = 'none';
+      acceptIncomingCall(call);
     });
 
     $('declineCall').addEventListener('click', async () => {
       if (!incomingCall) return;
       const call = incomingCall;
+      incomingCall = null;
+      $('callOverlay').style.display = 'none';
 
       try {
         await api(
-          documentsPath(CONFIG.callsId) + '/' + call.$id,
+          documentPath(CONFIG.callsId, call.$id),
           'PATCH',
           { data: { status: 'declined' } }
         );
       } catch (error) {
         console.error(error);
       }
-
-      incomingCall = null;
-      $('callOverlay').style.display = 'none';
     });
   }
 
@@ -1417,6 +1418,162 @@ const CONFIG = {
     button.style.display = canCall ? 'block' : 'none';
   }
 
+  function updateHangupButton() {
+    let button = $('hangupButton');
+
+    if (!button) {
+      button = document.createElement('button');
+      button.id = 'hangupButton';
+      button.textContent = 'Завершить звонок';
+      button.style.cssText = [
+        'position:fixed', 'left:50%', 'bottom:20px',
+        'transform:translateX(-50%)', 'z-index:9998',
+        'padding:12px 18px', 'border-radius:999px', 'border:0',
+        'background:#dc2626', 'color:#fff', 'font-weight:600'
+      ].join(';');
+
+      button.addEventListener('click', () => {
+        if (currentCall) closeCall(currentCall.id, 'ended');
+      });
+
+      document.body.appendChild(button);
+    }
+
+    button.style.display = currentCall ? 'block' : 'none';
+  }
+
+  async function getMicrophone() {
+    if (localStream) return localStream;
+
+    localStream = await navigator.mediaDevices.getUserMedia({
+      audio: true
+    });
+
+    return localStream;
+  }
+
+  function createPeerConnection() {
+    closePeerConnection();
+
+    peerConnection = new RTCPeerConnection(RTC_CONFIG);
+
+    peerConnection.onicecandidate = event => {
+      if (event.candidate && currentCall) {
+        sendCallSignal(
+          currentCall.id,
+          'candidate',
+          event.candidate
+        );
+      }
+    };
+
+    peerConnection.ontrack = event => {
+      playRemoteAudio(event.streams[0]);
+    };
+
+    return peerConnection;
+  }
+
+  function playRemoteAudio(stream) {
+    if (!remoteAudio) {
+      remoteAudio = document.createElement('audio');
+      remoteAudio.autoplay = true;
+      document.body.appendChild(remoteAudio);
+    }
+
+    remoteAudio.srcObject = stream;
+  }
+
+  function closePeerConnection() {
+    if (peerConnection) {
+      peerConnection.onicecandidate = null;
+      peerConnection.ontrack = null;
+      peerConnection.close();
+      peerConnection = null;
+    }
+
+    if (remoteAudio) {
+      remoteAudio.srcObject = null;
+      remoteAudio.remove();
+      remoteAudio = null;
+    }
+  }
+
+  async function sendCallSignal(callId, kind, payload) {
+    await api(documentsPath(CONFIG.callsignalsId), 'POST', {
+      documentId: newId(),
+      data: {
+        callId,
+        fromId: user.$id,
+        kind,
+        payload: JSON.stringify(payload)
+      },
+      permissions: [
+        'read("users")',
+        'update("users")'
+      ]
+    });
+  }
+
+  async function findCallSignal(callId, kind) {
+    const data = await api(
+      documentsPath(CONFIG.callsignalsId),
+      'GET',
+      undefined,
+      [
+        equal('callId', callId),
+        equal('kind', kind),
+        limit(1)
+      ]
+    );
+
+    return data.documents?.[0] || null;
+  }
+
+  async function processCallCandidates(callId) {
+    const data = await api(
+      documentsPath(CONFIG.callsignalsId),
+      'GET',
+      undefined,
+      [
+        equal('callId', callId),
+        equal('kind', 'candidate'),
+        { method: 'orderDesc', attribute: '$createdAt' },
+        limit(50)
+      ]
+    );
+
+    const signals = (data.documents || []).reverse();
+
+    for (const signal of signals) {
+      if (processedSignals.has(signal.$id)) continue;
+      processedSignals.add(signal.$id);
+
+      if (signal.fromId === user.$id) continue;
+
+      const candidate = JSON.parse(signal.payload);
+
+      if (
+        peerConnection &&
+        peerConnection.remoteDescription
+      ) {
+        await peerConnection.addIceCandidate(candidate);
+      } else {
+        pendingCandidates.push(candidate);
+      }
+    }
+  }
+
+  async function addPendingCandidates() {
+    while (pendingCandidates.length) {
+      const candidate = pendingCandidates.shift();
+
+      if (peerConnection) {
+        await peerConnection.addIceCandidate(candidate);
+      }
+    }
+  }
+
   async function startAudioCall() {
     if (!user || guest || !currentChat || isGeneral(currentChat)) return;
 
@@ -1429,33 +1586,195 @@ const CONFIG = {
     }
 
     try {
-await api(documentsPath(CONFIG.callsId), 'POST', {
-  documentId: newId(),
-  data: {
-    roomId: currentChat.$id,
-    callerId: user.$id,
-    callerName: (user.name || 'Пользователь').slice(0, 64),
-    targetId,
-    status: 'ringing',
-    createdAt: Math.floor(Date.now() / 1000)
-  },
-  permissions: [
-    'read("users")',
-    'update("users")'
-  ]
-});
+      const call = await api(documentsPath(CONFIG.callsId), 'POST', {
+        documentId: newId(),
+        data: {
+          roomId: currentChat.$id,
+          callerId: user.$id,
+          callerName: (user.name || 'Пользователь').slice(0, 64),
+          targetId,
+          status: 'ringing',
+          createdAt: Math.floor(Date.now() / 1000)
+        },
+        permissions: [
+          'read("users")',
+          'update("users")'
+        ]
+      });
 
-      alert('Звонок отправлен.');
+      currentCall = {
+        id: call.$id,
+        role: 'caller',
+        targetId
+      };
+
+      updateHangupButton();
+
+      const stream = await getMicrophone();
+      const pc = createPeerConnection();
+
+      stream.getTracks().forEach(track => {
+        pc.addTrack(track, stream);
+      });
+
+      const offer = await pc.createOffer();
+      await pc.setLocalDescription(offer);
+
+      await sendCallSignal(
+        call.$id,
+        'offer',
+        pc.localDescription
+      );
+
+      status('Вызываю…');
     } catch (error) {
       alert('Не удалось начать звонок: ' + error.message);
+      await closeCall();
     }
+  }
+
+  async function acceptIncomingCall(call) {
+    try {
+      currentCall = {
+        id: call.$id,
+        role: 'target',
+        callerId: call.callerId
+      };
+
+      updateHangupButton();
+
+      await api(
+        documentPath(CONFIG.callsId, call.$id),
+        'PATCH',
+        { data: { status: 'accepted' } }
+      );
+
+      const stream = await getMicrophone();
+      const pc = createPeerConnection();
+
+      stream.getTracks().forEach(track => {
+        pc.addTrack(track, stream);
+      });
+
+      const offer = await findCallSignal(call.$id, 'offer');
+
+      if (!offer) {
+        throw new Error('Данные звонка не найдены');
+      }
+
+      processedSignals.add(offer.$id);
+
+      await pc.setRemoteDescription(
+        JSON.parse(offer.payload)
+      );
+
+      await addPendingCandidates();
+
+      const answer = await pc.createAnswer();
+      await pc.setLocalDescription(answer);
+
+      await sendCallSignal(
+        call.$id,
+        'answer',
+        pc.localDescription
+      );
+
+      await processCallCandidates(call.$id);
+      status('Звонок принят');
+    } catch (error) {
+      alert('Не удалось принять звонок: ' + error.message);
+      await closeCall(call.$id, 'ended');
+    }
+  }
+
+  async function closeCall(callId, status = 'ended') {
+    if (callId) {
+      try {
+        await api(
+          documentPath(CONFIG.callsId, callId),
+          'PATCH',
+          { data: { status } }
+        );
+      } catch (error) {
+        console.error(error);
+      }
+    }
+
+    closePeerConnection();
+
+    if (localStream) {
+      localStream.getTracks().forEach(track => track.stop());
+      localStream = null;
+    }
+
+    currentCall = null;
+    incomingCall = null;
+    pendingCandidates = [];
+
+    if ($('callOverlay')) {
+      $('callOverlay').style.display = 'none';
+    }
+
+    updateHangupButton();
+    status('Звонок завершён');
   }
 
   async function checkIncomingCalls() {
     ensureCallOverlay();
     updateCallButton();
+    updateHangupButton();
 
-    if (!user || guest || incomingCall) return;
+    if (!user || guest) return;
+
+    if (currentCall) {
+      try {
+        const call = await api(
+          documentPath(CONFIG.callsId, currentCall.id)
+        );
+
+        if (
+          call.status === 'ended' ||
+          call.status === 'declined'
+        ) {
+          await closeCall();
+          return;
+        }
+
+        if (currentCall.role === 'caller') {
+          const answer = await findCallSignal(
+            currentCall.id,
+            'answer'
+          );
+
+          if (
+            answer &&
+            !processedSignals.has(answer.$id) &&
+            peerConnection
+          ) {
+            processedSignals.add(answer.$id);
+
+            await peerConnection.setRemoteDescription(
+              JSON.parse(answer.payload)
+            );
+
+            await addPendingCandidates();
+            status('Соединяю…');
+          }
+
+          await processCallCandidates(currentCall.id);
+        }
+
+        if (currentCall.role === 'target') {
+          await processCallCandidates(currentCall.id);
+        }
+      } catch (error) {
+        console.error('Ошибка звонка:', error);
+      }
+
+      return;
+    }
+
+    if (incomingCall) return;
 
     try {
       const data = await api(
@@ -1474,7 +1793,8 @@ await api(documentsPath(CONFIG.callsId), 'POST', {
       if (call) {
         incomingCall = call;
         $('callTitle').textContent = 'Входящий звонок';
-        $('callSubtitle').textContent = call.callerName || 'Пользователь';
+        $('callSubtitle').textContent =
+          call.callerName || 'Пользователь';
         $('callOverlay').style.display = 'flex';
       }
     } catch (error) {
@@ -1484,7 +1804,7 @@ await api(documentsPath(CONFIG.callsId), 'POST', {
 
   if (!callPollingStarted) {
     callPollingStarted = true;
-    setInterval(checkIncomingCalls, 2500);
+    setInterval(checkIncomingCalls, 2000);
   }
 
   async function createChat(data) {
