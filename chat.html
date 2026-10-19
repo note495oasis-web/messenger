@@ -3,98 +3,107 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer">
 <title>DataChats</title>
 
 <style>
-* {
-  box-sizing: border-box;
-}
+* { box-sizing: border-box; }
 
 :root {
-  color-scheme: dark;
   font-family: Arial, sans-serif;
+  color-scheme: dark;
+
+  --bg: #101621;
+  --panel: #192333;
+  --card: #1c283b;
+  --input: #141e2e;
+  --border: #34445e;
+  --text: #edf2fb;
+  --muted: #a8b7cd;
+  --button: #33435c;
+  --active: #305ca9;
+  --message: #24334b;
+  --own: #285db3;
+  --status: #24334a;
+  --error: #632e39;
+}
+
+:root.light {
+  color-scheme: light;
+
+  --bg: #f2f5fa;
+  --panel: #fff;
+  --card: #fff;
+  --input: #fff;
+  --border: #c7d0dd;
+  --text: #17202e;
+  --muted: #5c6b81;
+  --button: #405778;
+  --active: #d8e6ff;
+  --message: #e8edf5;
+  --own: #cfe0ff;
+  --status: #e6ebf3;
+  --error: #f7d9dd;
 }
 
 body {
   margin: 0;
-  background: #101621;
-  color: #edf2fb;
+  color: var(--text);
+  background: var(--bg);
 }
 
-button, input {
-  font: inherit;
-}
+button, input { font: inherit; }
 
 button {
+  padding: 10px 13px;
+  color: white;
+  background: var(--button);
   border: 0;
   border-radius: 10px;
-  padding: 11px 14px;
-  background: #33435c;
-  color: white;
   cursor: pointer;
 }
 
-button:hover {
-  filter: brightness(1.12);
-}
+button:hover { filter: brightness(1.1); }
+button:disabled { opacity: .5; cursor: wait; }
 
-button:disabled {
-  opacity: .5;
-  cursor: wait;
-}
-
-input {
+input:not([type="checkbox"]) {
   width: 100%;
   min-width: 0;
   padding: 12px;
-  border: 1px solid #42516b;
+  color: var(--text);
+  background: var(--input);
+  border: 1px solid var(--border);
   border-radius: 10px;
-  background: #141e2e;
-  color: white;
 }
 
-.primary {
-  background: #3879f6;
-}
+input[type="checkbox"] { width: 20px; height: 20px; }
 
-.danger {
-  background: #a63a4a;
-}
-
-.hidden {
-  display: none !important;
-}
+.primary { background: #3879f6; }
+.danger { background: #a63a4a; }
+.hidden { display: none !important; }
 
 .topbar {
   height: 56px;
+  padding: 0 18px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 18px;
-  background: #192333;
-  border-bottom: 1px solid #30405a;
+  background: var(--panel);
+  border-bottom: 1px solid var(--border);
 }
 
-.brand {
-  font-size: 23px;
-  font-weight: bold;
-}
-
-.build {
-  font-size: 12px;
-  color: #9eafc9;
-}
+.brand { font-size: 23px; font-weight: bold; }
+.build, .note, .user, .chat-id { color: var(--muted); }
+.build, .chat-id { font-size: 12px; }
 
 .status {
   padding: 10px 16px;
-  background: #24334a;
+  background: var(--status);
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
 
-.status.error {
-  background: #632e39;
-}
+.status.error { background: var(--error); }
 
 .auth {
   min-height: calc(100dvh - 56px);
@@ -104,31 +113,21 @@ input {
 }
 
 .card {
-  width: min(410px, 100%);
-  background: #1c283b;
+  width: min(420px, 100%);
   padding: 25px;
-  border: 1px solid #34445e;
+  background: var(--card);
+  border: 1px solid var(--border);
   border-radius: 18px;
 }
 
-.card h1 {
-  margin-top: 0;
-}
-
-.stack {
-  display: grid;
-  gap: 12px;
-}
-
-.note {
-  color: #a8b7cd;
-  font-size: 13px;
-  line-height: 1.5;
-}
+.card h1 { margin-top: 0; }
+.stack { display: grid; gap: 12px; }
+.note { font-size: 13px; line-height: 1.5; }
 
 .app {
   height: calc(100dvh - 56px);
   display: flex;
+  overflow: hidden;
 }
 
 .sidebar {
@@ -136,51 +135,43 @@ input {
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
-  background: #192333;
-  border-right: 1px solid #30405a;
+  background: var(--panel);
+  border-right: 1px solid var(--border);
   transition: margin-left .25s ease;
 }
 
-.sidebar.closed {
-  margin-left: -270px;
-}
+.sidebar.closed { margin-left: -270px; }
 
 .sidebar-head {
   padding: 16px;
-  border-bottom: 1px solid #30405a;
+  border-bottom: 1px solid var(--border);
 }
 
 .user {
   margin-top: 8px;
   font-size: 13px;
-  color: #a8b7cd;
   overflow-wrap: anywhere;
 }
 
-.chats {
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
-}
+.chats { flex: 1; min-height: 0; overflow-y: auto; }
 
 .chat-item {
   width: 100%;
   padding: 15px;
+  color: var(--text);
   text-align: left;
   border-radius: 0;
   background: transparent;
-  border-bottom: 1px solid #2a3950;
+  border-bottom: 1px solid var(--border);
   overflow-wrap: anywhere;
 }
 
-.chat-item.active {
-  background: #305ca9;
-}
+.chat-item.active { background: var(--active); }
 
 .sidebar-actions {
+  padding: 12px;
   display: grid;
   gap: 8px;
-  padding: 12px;
 }
 
 .main {
@@ -191,103 +182,30 @@ input {
 }
 
 .chat-header {
-  padding: 14px;
-  min-height: 70px;
-  background: #1c283b;
-  display: flex;
-  gap: 12px;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.chat-title {
-  font-size: 18px;
-  overflow-wrap: anywhere;
-}
-
-.chat-id {
-  font-size: 12px;
-  color: #a8b7cd;
-  margin-top: 5px;
-  overflow-wrap: anywhere;
-}
-
-.messages {
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
-  padding: 18px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.empty {
-  color: #a8b7cd;
-  text-align: center;
-  margin: auto;
-  padding: 20px;
-}
-
-.message {
-  max-width: 80%;
-  background: #24334b;
-  padding: 11px 14px;
-  border-radius: 14px;
-  align-self: flex-start;
-  overflow-wrap: anywhere;
-}
-
-.message.own {
-  background: #285db3;
-  align-self: flex-end;
-}
-
-.author, .time {
-  font-size: 12px;
-  color: #c4d1e7;
-}
-
-.author {
-  margin-bottom: 7px;
-}
-
-.message-text {
-  white-space: pre-wrap;
-}
-
-.message-footer {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-  margin-top: 8px;
-}
-
-.delete {
-  background: transparent;
-  padding: 0;
-  font-size: 12px;
-  text-decoration: underline;
-}
-
-.composer {
-  display: flex;
-  gap: 8px;
   padding: 12px;
-  background: #1c283b;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--card);
+  border-bottom: 1px solid var(--border);
 }
 
-.composer input {
-  flex: 1;
+.chat-heading { flex: 1; min-width: 0; }
+.chat-title { font-size: 18px; overflow-wrap: anywhere; }
+.chat-id { margin-top: 5px; overflow-wrap: anywhere; }
+
+.header-actions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
 }
 
 .sidebar-toggle {
   width: 34px;
   height: 34px;
   padding: 0;
+  flex-shrink: 0;
   border-radius: 50%;
-  font-size: 18px;
-  line-height: 1;
 }
 
 .sidebar-toggle span {
@@ -299,170 +217,128 @@ input {
   transform: rotate(180deg);
 }
 
-.checkbox-row {
+.messages {
+  flex: 1;
+  min-height: 0;
+  padding: 18px;
+  overflow-y: auto;
   display: flex;
-  gap: 10px;
-  align-items: center;
+  flex-direction: column;
+  gap: 12px;
 }
 
-.checkbox-row input {
-  width: 20px;
-  height: 20px;
-  flex-shrink: 0;
+.empty {
+  margin: auto;
+  padding: 20px;
+  text-align: center;
+  color: var(--muted);
+}
+
+.message {
+  max-width: 80%;
+  padding: 11px 14px;
+  background: var(--message);
+  border-radius: 14px;
+  align-self: flex-start;
+  overflow-wrap: anywhere;
+}
+
+.message.own {
+  background: var(--own);
+  align-self: flex-end;
+}
+
+.author, .time {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.author { margin-bottom: 7px; }
+.message-text { white-space: pre-wrap; }
+
+.message-footer {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-top: 8px;
+}
+
+.delete {
+  padding: 0;
+  color: var(--text);
+  background: transparent;
+  font-size: 12px;
+  text-decoration: underline;
+}
+
+.composer {
+  padding: 12px;
+  display: flex;
+  gap: 8px;
+  background: var(--card);
+}
+
+.composer input { flex: 1; }
+
+dialog {
+  width: min(460px, calc(100% - 28px));
+  max-height: 85dvh;
+  padding: 22px;
+  overflow-y: auto;
+  color: var(--text);
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+}
+
+dialog::backdrop { background: #0009; }
+
+.dialog-actions {
+  margin-top: 16px;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .request-item {
+  padding: 10px;
   display: flex;
-  gap: 10px;
   align-items: center;
   justify-content: space-between;
-  padding: 10px;
-  border: 1px solid #34445e;
+  gap: 10px;
+  border: 1px solid var(--border);
   border-radius: 10px;
   overflow-wrap: anywhere;
 }
 
-dialog {
-  width: min(440px, calc(100% - 28px));
-  color: #edf2fb;
-  background: #1c283b;
-  border: 1px solid #42516b;
-  border-radius: 16px;
-  padding: 22px;
-}
-
-dialog::backdrop {
-  background: #0009;
-}
-
-.dialog-actions {
-  display: flex;
-  gap: 8px;
-  margin-top: 16px;
-  flex-wrap: wrap;
-}
-
-body.light {
-  background: #f2f5fa;
-  color: #17202e;
-}
-
-body.light .topbar,
-body.light .sidebar {
-  background: #ffffff;
-  border-color: #dbe1ea;
-}
-
-body.light .card,
-body.light .chat-header,
-body.light .composer,
-body.light dialog {
-  background: #ffffff;
-  border-color: #dbe1ea;
-  color: #17202e;
-}
-
-body.light input {
-  background: #ffffff;
-  color: #17202e;
-  border-color: #c7d0dd;
-}
-
-body.light .chat-item {
-  border-color: #e3e8f0;
-}
-
-body.light .chat-item.active {
-  background: #d8e6ff;
-  color: #12233d;
-}
-
-body.light .message {
-  background: #e8edf5;
-  color: #17202e;
-}
-
-body.light .message.own {
-  background: #cfe0ff;
-  color: #12233d;
-}
-
-body.light .user,
-body.light .chat-id,
-body.light .author,
-body.light .time,
-body.light .note,
-body.light .empty,
-body.light .build {
-  color: #5c6b81;
-}
-
-body.light .status {
-  background: #e6ebf3;
-  color: #17202e;
-}
-
-body.light .status.error {
-  background: #f7d9dd;
-  color: #7b2230;
-}
-
-body.light .request-item {
-  border-color: #dbe1ea;
-}
+.request-item span { min-width: 0; }
 
 @media (max-width: 650px) {
-  .sidebar {
-    width: 160px;
-  }
-
-  .sidebar.closed {
-    margin-left: -160px;
-  }
-
-  .sidebar-actions {
-    padding: 8px;
-  }
-
-  button {
-    font-size: 13px;
-    padding: 10px;
-  }
-
-  .messages {
-    padding: 10px;
-  }
-
-  .message {
-    max-width: 96%;
-  }
-
-  .chat-header {
-    align-items: flex-start;
-    flex-direction: column;
-  }
-
-  .composer {
-    flex-wrap: wrap;
-    padding: 8px;
-  }
-
-  .composer button {
-    width: 100%;
-  }
-
-  .build {
-    display: none;
-  }
+  .sidebar { width: 160px; }
+  .sidebar.closed { margin-left: -160px; }
+  .sidebar-actions { padding: 8px; }
+  button { font-size: 13px; padding: 10px; }
+  .chat-header { align-items: flex-start; flex-wrap: wrap; }
+  .header-actions { width: 100%; }
+  .messages { padding: 10px; }
+  .message { max-width: 96%; }
+  .composer { flex-wrap: wrap; padding: 8px; }
+  .composer button { width: 100%; }
+  .build { display: none; }
 }
 </style>
 </head>
 
 <body>
-
 <header class="topbar">
   <div class="brand">DataChats</div>
-  <div class="build">Версия REST-8</div>
+  <div class="build">REST-9 · Session fallback</div>
 </header>
 
 <div id="status" class="status hidden" role="status"></div>
@@ -470,48 +346,25 @@ body.light .request-item {
 <section id="authScreen" class="auth">
   <div class="card">
     <h1>DataChats</h1>
-
     <p class="note">
       Войди по email и паролю, зарегистрируйся или продолжи как гость.
     </p>
 
     <form id="authForm" class="stack">
-      <input
-        id="nameInput"
-        placeholder="Имя для регистрации"
-        maxlength="64"
-        autocomplete="nickname"
-      >
+      <input id="nameInput" placeholder="Имя для регистрации"
+             maxlength="64" autocomplete="nickname">
 
-      <input
-        id="emailInput"
-        type="email"
-        placeholder="Email"
-        autocomplete="email"
-      >
+      <input id="emailInput" type="email"
+             placeholder="Email" autocomplete="email">
 
-      <input
-        id="passwordInput"
-        type="password"
-        placeholder="Пароль — минимум 8 символов"
-        autocomplete="current-password"
-      >
+      <input id="passwordInput" type="password"
+             placeholder="Пароль — минимум 8 символов"
+             autocomplete="current-password">
 
-      <button id="loginButton" class="primary" type="submit">
-        Войти
-      </button>
-
-      <button id="registerButton" type="button">
-        Зарегистрироваться
-      </button>
-
-      <button id="guestButton" type="button">
-        Войти как гость
-      </button>
-
-      <button id="forgotButton" type="button">
-        Забыл пароль?
-      </button>
+      <button id="loginButton" class="primary" type="submit">Войти</button>
+      <button id="registerButton" type="button">Зарегистрироваться</button>
+      <button id="guestButton" type="button">Войти как гость</button>
+      <button id="forgotButton" type="button">Забыл пароль?</button>
     </form>
   </div>
 </section>
@@ -536,49 +389,33 @@ body.light .request-item {
 
   <main class="main">
     <header class="chat-header">
-      <div>
+      <button id="sidebarToggle" class="sidebar-toggle"
+              type="button" aria-controls="sidebar"
+              aria-expanded="true" title="Скрыть чаты">
+        <span aria-hidden="true">◀</span>
+      </button>
+
+      <div class="chat-heading">
         <div id="chatTitle" class="chat-title">Выберите чат</div>
         <div id="chatIdLabel" class="chat-id"></div>
       </div>
 
-      <div class="dialog-actions">
-        <button id="sidebarToggle" class="sidebar-toggle" type="button">
-          <span>◀</span>
-        </button>
-
-        <button id="inviteButton" class="hidden">
-          Приглашение / ID
-        </button>
-
-        <button id="chatSettingsButton" class="hidden">
-          Настройки чата
-        </button>
-
-        <button id="leaveChatButton" class="danger hidden">
-          Выйти из чата
-        </button>
-
-        <button id="deleteChatButton" class="danger hidden">
-          Удалить чат
-        </button>
-
-        <button id="settingsButton">
-          Настройки
-        </button>
+      <div class="header-actions">
+        <button id="inviteButton" class="hidden">Приглашение / ID</button>
+        <button id="chatSettingsButton" class="hidden">Настройки чата</button>
+        <button id="leaveChatButton" class="danger hidden">Выйти из чата</button>
+        <button id="deleteChatButton" class="danger hidden">Удалить чат</button>
+        <button id="settingsButton">Настройки</button>
       </div>
     </header>
 
     <div id="messages" class="messages">
-      <div class="empty">Создай чат или присоединись к существующему.</div>
+      <div class="empty">Выбери чат слева.</div>
     </div>
 
     <form id="messageForm" class="composer hidden">
-      <input
-        id="messageInput"
-        placeholder="Сообщение…"
-        maxlength="2000"
-        autocomplete="off"
-      >
+      <input id="messageInput" placeholder="Сообщение…"
+             maxlength="2000" autocomplete="off">
       <button class="primary" type="submit">Отправить</button>
     </form>
   </main>
@@ -586,8 +423,12 @@ body.light .request-item {
 
 <dialog id="createDialog">
   <h2>Создать чат</h2>
-  <form id="createForm">
+  <form id="createForm" class="stack">
     <input id="titleInput" placeholder="Название" maxlength="100" required>
+    <label class="checkbox-row">
+      <input id="createPrivateInput" type="checkbox">
+      Вход только после принятия заявки
+    </label>
     <div class="dialog-actions">
       <button class="primary" type="submit">Создать</button>
       <button type="button" data-close>Отмена</button>
@@ -597,28 +438,20 @@ body.light .request-item {
 
 <dialog id="searchDialog">
   <h2>Найти пользователя</h2>
-
   <form id="searchForm" class="stack">
-    <input
-      id="searchInput"
-      placeholder="Введи ID пользователя"
-      required
-      autocomplete="off"
-    >
+    <input id="searchInput" placeholder="Введите ID пользователя"
+           required autocomplete="off">
 
-    <div class="note">
-      Твой ID:
-      <strong id="myIdLabel"></strong>
-    </div>
+    <label class="note">
+      Твой ID
+      <input id="myIdInput" readonly>
+    </label>
 
-    <button id="copyMyIdButton" type="button">
-      Скопировать мой ID
-    </button>
-
+    <button id="copyMyIdButton" type="button">Скопировать мой ID</button>
     <div id="searchResult" class="note"></div>
 
     <div class="dialog-actions">
-      <button class="primary" type="submit">Найти</button>
+      <button class="primary" type="submit">Найти и написать</button>
       <button type="button" data-close>Закрыть</button>
     </div>
   </form>
@@ -626,45 +459,34 @@ body.light .request-item {
 
 <dialog id="settingsDialog">
   <h2>Настройки</h2>
-
   <div class="stack">
-    <button id="themeButton">
-      Светлая тема
-    </button>
-
-    <button id="sidebarSettingsButton">
-      Скрыть чаты
-    </button>
-
-    <button data-close>
-      Закрыть
-    </button>
+    <button id="themeButton">Светлая тема</button>
+    <button id="sidebarSettingsButton">Скрыть чаты</button>
+    <button type="button" data-close>Закрыть</button>
   </div>
 </dialog>
 
 <dialog id="chatSettingsDialog">
   <h2>Настройки чата</h2>
-
   <form id="chatSettingsForm" class="stack">
     <label>
-      Название чата
+      Название
       <input id="chatTitleInput" maxlength="100" required>
     </label>
 
     <label class="checkbox-row">
       <input id="privateCheckbox" type="checkbox">
-      Приватный чат
+      Вход после принятия заявки
     </label>
 
     <p class="note">
-      В приватном чате новый пользователь сначала отправляет заявку.
-      Владелец должен принять её, чтобы человек смог войти.
+      В текущей тестовой версии заявки управляют входом через интерфейс.
+      Это не заменяет серверную защиту доступа.
     </p>
 
-    <div id="requestsBox" class="hidden">
-      <strong>Заявки на вход</strong>
-      <div id="requestsList" class="stack"></div>
-    </div>
+    <button id="reloadRequestsButton" type="button">Обновить заявки</button>
+
+    <div id="requestsList" class="stack"></div>
 
     <div class="dialog-actions">
       <button class="primary" type="submit">Сохранить</button>
@@ -675,52 +497,40 @@ body.light .request-item {
 
 <dialog id="joinDialog">
   <h2 id="joinTitle">Присоединиться</h2>
-  <form id="joinForm">
-    <input id="joinInput" placeholder="" required>
+  <form id="joinForm" class="stack">
+    <input id="joinInput" required autocomplete="off">
     <div class="dialog-actions">
-      <button class="primary" type="submit">Войти</button>
-      <button type="button" data-close>Отмена</button>
+      <button class="primary" type="submit">Войти / отправить заявку</button>
+      <button type="button" data-close>Закрыть</button>
     </div>
   </form>
 </dialog>
 
 <dialog id="inviteDialog">
-  <h2>Приглашение</h2>
-
+  <h2>Приглашение в групповой чат</h2>
   <div class="stack">
     <label>
-      Код для гостя
+      Код приглашения для гостя
       <input id="inviteCodeInput" readonly>
     </label>
-
-    <button id="copyCodeButton">Скопировать код</button>
+    <button id="copyCodeButton" type="button">Скопировать код</button>
 
     <label>
-      ID для пользователя с аккаунтом
+      ID чата — это не ID пользователя
       <input id="inviteIdInput" readonly>
     </label>
+    <button id="copyIdButton" type="button">Скопировать ID чата</button>
 
-    <button id="copyIdButton">Скопировать ID</button>
-    <button data-close>Закрыть</button>
+    <button type="button" data-close>Закрыть</button>
   </div>
 </dialog>
 
 <dialog id="forgotDialog">
   <h2>Восстановление пароля</h2>
-
   <form id="forgotForm" class="stack">
-    <input
-      id="forgotEmailInput"
-      type="email"
-      placeholder="Твой email"
-      required
-      autocomplete="email"
-    >
-
-    <p class="note">
-      Мы отправим письмо со ссылкой для создания нового пароля.
-    </p>
-
+    <input id="forgotEmailInput" type="email" placeholder="Твой email"
+           required autocomplete="email">
+    <p class="note">Отправим письмо со ссылкой для нового пароля.</p>
     <div class="dialog-actions">
       <button class="primary" type="submit">Отправить письмо</button>
       <button type="button" data-close>Закрыть</button>
@@ -729,20 +539,21 @@ body.light .request-item {
 </dialog>
 
 <dialog id="resetDialog">
-  <h2>Создать новый пароль</h2>
-
+  <h2>Новый пароль</h2>
   <form id="resetForm" class="stack">
-    <input
-      id="newPasswordInput"
-      type="password"
-      placeholder="Новый пароль — минимум 8 символов"
-      minlength="8"
-      required
-      autocomplete="new-password"
-    >
+    <input id="newPasswordInput" type="password"
+           placeholder="Новый пароль" minlength="8" maxlength="256"
+           required autocomplete="new-password">
+
+    <input id="repeatPasswordInput" type="password"
+           placeholder="Повтори пароль" minlength="8" maxlength="256"
+           required autocomplete="new-password">
+
+    <div id="resetStatus" class="note" role="status"></div>
 
     <div class="dialog-actions">
       <button class="primary" type="submit">Сохранить пароль</button>
+      <button type="button" data-close>Закрыть</button>
     </div>
   </form>
 </dialog>
@@ -759,10 +570,13 @@ body.light .request-item {
     messagesId: 'messages',
     usersId: 'users',
     generalChatId: 'general',
-    recoveryUrl: 'https://note495oasis-web.github.io/chat.html'
+
+    // Берём реальный адрес открытого HTML, включая путь репозитория.
+    recoveryUrl: location.origin + location.pathname
   };
 
   const $ = id => document.getElementById(id);
+  const sessionStorageKey = 'datachats-session-' + CONFIG.projectId;
 
   let user = null;
   let guest = false;
@@ -770,8 +584,29 @@ body.light .request-item {
   let chatItems = [];
   let timer = null;
   let polling = false;
-  let messageVersion = '';
+  let busy = false;
   let sessionEpoch = 0;
+  let messageVersion = '';
+  let recovery = null;
+
+  function readStorage(key) {
+    try { return localStorage.getItem(key); }
+    catch { return null; }
+  }
+
+  function writeStorage(key, value) {
+    try {
+      localStorage.setItem(key, value);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  function clearStoredSession() {
+    try { localStorage.removeItem(sessionStorageKey); }
+    catch {}
+  }
 
   function status(text, error = false) {
     $('status').textContent = text;
@@ -779,29 +614,34 @@ body.light .request-item {
     $('status').classList.toggle('error', error);
   }
 
-  async function api(path, method = 'GET', body = undefined, queries = []) {
+  async function api(path, method = 'GET', body, queries = []) {
     const url = new URL(CONFIG.endpoint.replace(/\/$/, '') + path);
 
     for (const query of queries) {
       url.searchParams.append('queries[]', JSON.stringify(query));
     }
 
+    const headers = {
+      'X-Appwrite-Project': CONFIG.projectId,
+      'Content-Type': 'application/json'
+    };
+
+    const fallback = readStorage(sessionStorageKey);
+    if (fallback) headers['X-Fallback-Cookies'] = fallback;
+
     let response;
 
     try {
-      response = await fetch(url.toString(), {
+      response = await fetch(url, {
         method,
         credentials: 'include',
-        headers: {
-          'X-Appwrite-Project': CONFIG.projectId,
-          'Content-Type': 'application/json'
-        },
+        headers,
         body: body === undefined ? undefined : JSON.stringify(body)
       });
-    } catch (error) {
+    } catch {
       throw new Error(
-        'Не удалось подключиться к Appwrite. Проверь API Endpoint, ' +
-        'интернет и Web platform с hostname note495oasis-web.github.io.'
+        'Не удалось подключиться к Appwrite. ' +
+        'Проверь интернет, Web platform и ошибки CORS в Network.'
       );
     }
 
@@ -809,20 +649,35 @@ body.light .request-item {
     let data = {};
 
     if (raw) {
-      try {
-        data = JSON.parse(raw);
-      } catch {
-        throw new Error('Appwrite вернул неожиданный ответ: ' + response.status);
+      try { data = JSON.parse(raw); }
+      catch {
+        throw new Error('Неожиданный ответ Appwrite: HTTP ' + response.status);
       }
     }
 
     if (!response.ok) {
       const error = new Error(
-        (data.message || response.statusText) + ' [HTTP ' + response.status + ']'
+        (data.message || response.statusText) +
+        ' [HTTP ' + response.status + ']'
       );
+
       error.code = response.status;
       error.type = data.type;
       throw error;
+    }
+
+    const cookies = response.headers.get('X-Fallback-Cookies');
+
+    if (cookies && !writeStorage(sessionStorageKey, cookies)) {
+      status(
+        'Браузер запретил сохранение резервной сессии. ' +
+        'Разреши хранение данных для сайта.',
+        true
+      );
+    }
+
+    if (method === 'DELETE' && path === '/account/sessions/current') {
+      clearStoredSession();
     }
 
     return data;
@@ -833,97 +688,175 @@ body.light .request-item {
       '/collections/' + encodeURIComponent(collectionId) + '/documents';
   }
 
-  function equal(attribute, value) {
-    return { method: 'equal', attribute, values: [value] };
+  function documentPath(collectionId, id) {
+    return documentsPath(collectionId) + '/' + encodeURIComponent(id);
   }
 
-  function limit(value) {
-    return { method: 'limit', values: [value] };
-  }
+  const equal = (attribute, value) => ({
+    method: 'equal', attribute, values: [value]
+  });
 
-  function applyTheme(theme) {
-    const light = theme === 'light';
+  const contains = (attribute, value) => ({
+    method: 'contains', attribute, values: [value]
+  });
 
-    document.body.classList.toggle('light', light);
-    localStorage.setItem('datachats-theme', theme);
-
-    $('themeButton').textContent = light
-      ? 'Тёмная тема'
-      : 'Светлая тема';
-  }
-
-  function applySidebar(open) {
-    $('sidebar').classList.toggle('closed', !open);
-    localStorage.setItem('datachats-sidebar', open ? 'open' : 'closed');
-
-    $('sidebarSettingsButton').textContent = open
-      ? 'Скрыть чаты'
-      : 'Показать чаты';
-  }
-
-  function toggleSidebar() {
-    const isOpen = !$('sidebar').classList.contains('closed');
-    applySidebar(!isOpen);
-  }
-
-  function dmKeyFor(firstId, secondId) {
-    return [firstId, secondId].sort().join('__');
-  }
+  const limit = value => ({ method: 'limit', values: [value] });
 
   function newId() {
     return crypto.randomUUID().replaceAll('-', '');
   }
 
   function inviteCode() {
-    const bytes = crypto.getRandomValues(new Uint8Array(12));
-    return Array.from(bytes, b => b.toString(16).padStart(2, '0'))
-      .join('').toUpperCase();
+    return Array.from(
+      crypto.getRandomValues(new Uint8Array(12)),
+      byte => byte.toString(16).padStart(2, '0')
+    ).join('').toUpperCase();
   }
 
   function isOwner(chat) {
-    return chat.ownerId === user.$id;
+    return !!user && chat.ownerId === user.$id;
   }
 
-  function isMember(chat) {
-    return Array.isArray(chat.memberIds) &&
-      chat.memberIds.includes(user.$id);
+  function isGeneral(chat) {
+    return chat.$id === CONFIG.generalChatId;
+  }
+
+  function isDirect(chat) {
+    return !!chat.dmKey;
+  }
+
+  function membersOf(chat) {
+    return Array.isArray(chat.memberIds) ? chat.memberIds : [];
+  }
+
+  function requestsOf(chat) {
+    return Array.isArray(chat.joinRequests) ? chat.joinRequests : [];
   }
 
   async function action(button, operation) {
-    if (button.disabled) return;
+    if (busy || button.disabled) return;
+
+    busy = true;
     button.disabled = true;
     status('');
 
     try {
       await operation();
     } catch (error) {
-      console.error(error);
       status(error.message, true);
+
+      if ($('resetDialog').open) {
+        $('resetStatus').textContent = error.message;
+      }
     } finally {
+      busy = false;
       button.disabled = false;
     }
   }
 
+  function applyTheme(theme) {
+    const light = theme === 'light';
+    document.documentElement.classList.toggle('light', light);
+    writeStorage('datachats-theme', light ? 'light' : 'dark');
+    $('themeButton').textContent = light ? 'Тёмная тема' : 'Светлая тема';
+  }
+
+  function applySidebar(open) {
+    $('sidebar').classList.toggle('closed', !open);
+    $('sidebar').inert = !open;
+
+    $('sidebarToggle').setAttribute('aria-expanded', String(open));
+    $('sidebarToggle').title = open ? 'Скрыть чаты' : 'Показать чаты';
+    $('sidebarSettingsButton').textContent =
+      open ? 'Скрыть чаты' : 'Показать чаты';
+
+    writeStorage('datachats-sidebar', open ? 'open' : 'closed');
+  }
+
+  function toggleSidebar() {
+    applySidebar($('sidebar').classList.contains('closed'));
+  }
+
   function closeChat() {
-    clearInterval(timer);
-    sessionEpoch++;
     currentChat = null;
     messageVersion = '';
 
     $('chatTitle').textContent = 'Выберите чат';
     $('chatIdLabel').textContent = '';
-    $('inviteButton').classList.add('hidden');
-    $('chatSettingsButton').classList.add('hidden');
-    $('leaveChatButton').classList.add('hidden');
-    $('deleteChatButton').classList.add('hidden');
     $('messageForm').classList.add('hidden');
-    $('messages').replaceChildren();
+
+    for (const id of [
+      'inviteButton', 'chatSettingsButton',
+      'leaveChatButton', 'deleteChatButton'
+    ]) {
+      $(id).classList.add('hidden');
+    }
+
+    const empty = document.createElement('div');
+    empty.className = 'empty';
+    empty.textContent = 'Выбери чат слева.';
+    $('messages').replaceChildren(empty);
+
+    renderChats();
+  }
+
+  function updateHeader() {
+    if (!currentChat) return;
+
+    const general = isGeneral(currentChat);
+    const owner = isOwner(currentChat);
+    const direct = isDirect(currentChat);
+
+    $('chatTitle').textContent = currentChat.title;
+    $('chatIdLabel').textContent = 'ID чата: ' + currentChat.$id;
+
+    $('inviteButton').classList.toggle('hidden', general || direct);
+    $('chatSettingsButton').classList.toggle(
+      'hidden', general || direct || !owner
+    );
+    $('leaveChatButton').classList.toggle('hidden', general || owner);
+    $('deleteChatButton').classList.toggle('hidden', general || !owner);
+  }
+
+  async function ensureProfile(account) {
+    const path = documentPath(CONFIG.usersId, account.$id);
+
+    try {
+      await api(path);
+      return;
+    } catch (error) {
+      if (error.code !== 404) throw error;
+    }
+
+    try {
+      await api(documentsPath(CONFIG.usersId), 'POST', {
+        documentId: account.$id,
+        data: {
+          userId: account.$id,
+          name: (
+            account.name ||
+            (account.email ? 'Пользователь' : 'Гость ' + account.$id.slice(0, 6))
+          ).slice(0, 64)
+        },
+        permissions: [
+          'read("users")',
+          'update("user:' + account.$id + '")',
+          'delete("user:' + account.$id + '")'
+        ]
+      });
+    } catch (error) {
+      if (error.code !== 409) throw error;
+    }
   }
 
   async function enterApp(account) {
+    clearInterval(timer);
+    sessionEpoch++;
+
     user = account;
     guest = !account.email;
-    sessionEpoch++;
+    currentChat = null;
+    chatItems = [];
 
     $('authScreen').classList.add('hidden');
     $('appScreen').classList.remove('hidden');
@@ -933,62 +866,96 @@ body.light .request-item {
       ? 'Гость ' + user.$id.slice(0, 6)
       : (user.name || user.email);
 
-    $('myIdLabel').textContent = user.$id;
+    $('myIdInput').value = user.$id;
+    $('joinButton').textContent = guest ? 'По приглашению' : 'По ID чата';
 
-    $('joinButton').textContent = guest
-      ? 'По приглашению'
-      : 'По ID чата';
+    closeChat();
 
-    clearInterval(timer);
+    const warnings = [];
+
+    try { await ensureProfile(account); }
+    catch (error) {
+      warnings.push('Профиль для поиска не сохранён: ' + error.message);
+    }
+
+    try { await loadChats(); }
+    catch (error) {
+      warnings.push('Не удалось загрузить чаты: ' + error.message);
+    }
+
+    const epoch = sessionEpoch;
 
     timer = setInterval(async () => {
-      if (!currentChat || document.hidden || polling) return;
+      if (
+        epoch !== sessionEpoch || !user ||
+        document.hidden || polling || busy
+      ) return;
+
       polling = true;
 
       try {
-        await loadMessages();
+        await loadChats();
+        if (currentChat) await loadMessages();
       } catch (error) {
-        console.error('Обновление сообщений:', error);
+        status('Ошибка обновления: ' + error.message, true);
       } finally {
         polling = false;
       }
-    }, 4000);
+    }, 5000);
 
+    status(warnings.join('\n'), warnings.length > 0);
+  }
+
+  async function getAccountAfterLogin() {
     try {
-      await loadChats();
+      return await api('/account');
     } catch (error) {
-      console.error(error);
-      status('Вход выполнен, но чаты не загрузились: ' + error.message, true);
+      if (error.code === 401) {
+        throw new Error(
+          'Сессия создана, но Appwrite её не распознал. ' +
+          'У запроса входа проверь наличие Response Header ' +
+          'X-Fallback-Cookies. Значение этого заголовка никому не отправляй.'
+        );
+      }
+
+      throw error;
     }
   }
 
   async function loadChats() {
+    if (!user) return;
+
+    const epoch = sessionEpoch;
+
     const data = await api(
       documentsPath(CONFIG.chatsId),
       'GET',
       undefined,
-      [
-        {
-          method: 'contains',
-          attribute: 'memberIds',
-          values: [user.$id]
-        },
-        limit(100)
-      ]
+      [contains('memberIds', user.$id), limit(100)]
     );
 
-    const generalChat = {
-      $id: CONFIG.generalChatId,
-      title: 'Общий чат',
-      inviteCode: '',
-      ownerId: '',
-      memberIds: []
-    };
+    if (epoch !== sessionEpoch || !user) return;
 
     chatItems = [
-      generalChat,
-      ...(data.documents || [])
+      {
+        $id: CONFIG.generalChatId,
+        title: 'Общий чат',
+        memberIds: [],
+        ownerId: ''
+      },
+      ...(data.documents || []).filter(
+        chat => chat.$id !== CONFIG.generalChatId
+      )
     ];
+
+    if (currentChat && !isGeneral(currentChat)) {
+      const updated = chatItems.find(chat => chat.$id === currentChat.$id);
+
+      if (updated) {
+        currentChat = updated;
+        updateHeader();
+      }
+    }
 
     renderChats();
   }
@@ -996,20 +963,16 @@ body.light .request-item {
   function renderChats() {
     $('chatList').replaceChildren();
 
-    if (!chatItems.length) {
-      const empty = document.createElement('p');
-      empty.className = 'note';
-      empty.style.padding = '14px';
-      empty.textContent = 'Чатов пока нет';
-      $('chatList').append(empty);
-      return;
-    }
-
     for (const chat of chatItems) {
       const button = document.createElement('button');
+      button.type = 'button';
       button.className = 'chat-item';
       button.classList.toggle('active', currentChat?.$id === chat.$id);
-      button.textContent = chat.title;
+
+      const requestCount = isOwner(chat) ? requestsOf(chat).length : 0;
+
+      button.textContent = chat.title +
+        (requestCount ? ' · Заявки: ' + requestCount : '');
 
       button.addEventListener('click', () => {
         action(button, () => openChat(chat));
@@ -1020,33 +983,20 @@ body.light .request-item {
   }
 
   async function openChat(chat) {
+    if (!isGeneral(chat) && !membersOf(chat).includes(user.$id)) {
+      throw new Error('Ты не участник этого чата');
+    }
+
     currentChat = chat;
     messageVersion = '';
 
-    const isGeneral = chat.$id === CONFIG.generalChatId;
-    const owner = isOwner(chat);
-
-    $('chatTitle').textContent = chat.title;
-    $('chatIdLabel').textContent = 'ID: ' + chat.$id;
-
-    $('inviteButton').classList.toggle('hidden', isGeneral);
-    $('chatSettingsButton').classList.toggle('hidden', isGeneral);
-
-    $('leaveChatButton').classList.toggle(
-      'hidden',
-      isGeneral || owner
-    );
-
-    $('deleteChatButton').classList.toggle(
-      'hidden',
-      isGeneral || !owner
-    );
-
-    $('messageForm').classList.remove('hidden');
-    $('messages').replaceChildren();
-
+    updateHeader();
     renderChats();
-    await loadMessages();
+
+    $('messages').replaceChildren();
+    $('messageForm').classList.remove('hidden');
+
+    await loadMessages(true);
   }
 
   async function loadMessages(force = false) {
@@ -1054,6 +1004,7 @@ body.light .request-item {
 
     const roomId = currentChat.$id;
     const epoch = sessionEpoch;
+    const ownUserId = user.$id;
 
     const data = await api(
       documentsPath(CONFIG.messagesId),
@@ -1066,16 +1017,18 @@ body.light .request-item {
       ]
     );
 
-    if (epoch !== sessionEpoch || currentChat?.$id !== roomId) return;
+    if (
+      epoch !== sessionEpoch ||
+      currentChat?.$id !== roomId ||
+      !user
+    ) return;
 
     const messages = (data.documents || []).reverse();
-
     const version = JSON.stringify(
       messages.map(message => [message.$id, message.$updatedAt])
     );
 
     if (!force && version === messageVersion) return;
-
     messageVersion = version;
 
     const box = $('messages');
@@ -1093,7 +1046,7 @@ body.light .request-item {
     }
 
     for (const message of messages) {
-      const own = message.senderId === user.$id;
+      const own = message.senderId === ownUserId;
       const item = document.createElement('div');
       item.className = 'message' + (own ? ' own' : '');
 
@@ -1110,9 +1063,12 @@ body.light .request-item {
 
       const time = document.createElement('span');
       time.className = 'time';
-      time.textContent = new Date(message.$createdAt).toLocaleTimeString(
+      time.textContent = new Date(message.$createdAt).toLocaleString(
         'ru-RU',
-        { hour: '2-digit', minute: '2-digit' }
+        {
+          day: '2-digit', month: '2-digit',
+          hour: '2-digit', minute: '2-digit'
+        }
       );
 
       footer.append(time);
@@ -1124,20 +1080,17 @@ body.light .request-item {
         button.textContent = 'Удалить';
 
         button.addEventListener('click', () => {
-          if (!confirm('Удалить это сообщение?')) return;
+          if (!confirm('Удалить сообщение?')) return;
 
           action(button, async () => {
-            if (message.senderId !== user.$id) {
-              throw new Error('Можно удалять только свои сообщения');
-            }
-
             await api(
-              documentsPath(CONFIG.messagesId) + '/' +
-                encodeURIComponent(message.$id),
+              documentPath(CONFIG.messagesId, message.$id),
               'DELETE'
             );
 
-            await loadMessages(true);
+            if (currentChat?.$id === roomId) {
+              await loadMessages(true);
+            }
           });
         });
 
@@ -1148,69 +1101,91 @@ body.light .request-item {
       box.append(item);
     }
 
-    if (force || nearBottom) {
-      box.scrollTop = box.scrollHeight;
-    }
+    if (force || nearBottom) box.scrollTop = box.scrollHeight;
+  }
+
+  async function createChat(data) {
+    return api(documentsPath(CONFIG.chatsId), 'POST', {
+      documentId: newId(),
+      data,
+      permissions: [
+        'read("user:' + user.$id + '")',
+        'update("user:' + user.$id + '")',
+        'delete("user:' + user.$id + '")'
+      ]
+    });
   }
 
   async function openDirectChat(otherUser) {
-    const key = dmKeyFor(user.$id, otherUser.userId);
+    const key = [user.$id, otherUser.userId].sort().join('__');
 
-    const existing = await api(
+    const result = await api(
       documentsPath(CONFIG.chatsId),
       'GET',
       undefined,
       [equal('dmKey', key), limit(1)]
     );
 
-    let chat = existing.documents?.[0];
+    let chat = result.documents?.[0];
 
-    if (!chat) {
-      chat = await api(
-        documentsPath(CONFIG.chatsId),
-        'POST',
-        {
-          documentId: newId(),
-          data: {
-            title: 'Личные сообщения: ' + (otherUser.name || otherUser.userId),
-            inviteCode: inviteCode(),
-            ownerId: user.$id,
-            memberIds: [user.$id, otherUser.userId],
-            allowedUserIds: [],
-            isPrivate: false,
-            joinRequests: [],
-            dmKey: key
-          },
-          permissions: []
-        }
+    if (chat && !membersOf(chat).includes(user.$id)) {
+      throw new Error(
+        'Этот личный чат уже существует, но ты вышел из него. ' +
+        'Возвращение в такой чат требует отдельной серверной логики.'
       );
     }
 
-    $('searchDialog').close();
-    $('searchInput').value = '';
-    $('searchResult').textContent = '';
+    if (!chat) {
+      chat = await api(documentsPath(CONFIG.chatsId), 'POST', {
+        documentId: newId(),
+        data: {
+          title: (
+            'ЛС: ' +
+            (user.name || 'Пользователь') +
+            ' — ' +
+            (otherUser.name || otherUser.userId)
+          ).slice(0, 100),
+          inviteCode: inviteCode(),
+          ownerId: user.$id,
+          memberIds: [user.$id, otherUser.userId],
+          allowedUserIds: [],
+          isPrivate: true,
+          joinRequests: [],
+          dmKey: key
+        },
+        permissions: [
+          'read("user:' + user.$id + '")',
+          'read("user:' + otherUser.userId + '")',
+          'update("user:' + user.$id + '")',
+          'delete("user:' + user.$id + '")'
+        ]
+      });
+    }
 
+    $('searchDialog').close();
     await loadChats();
     await openChat(chat);
   }
 
-  function openChatSettings() {
-    if (!currentChat || currentChat.$id === CONFIG.generalChatId) return;
-
-    $('chatTitleInput').value = currentChat.title;
-    $('privateCheckbox').checked = currentChat.isPrivate === true;
-
-    renderJoinRequests();
-    $('chatSettingsDialog').showModal();
+  async function freshChat(id) {
+    return api(documentPath(CONFIG.chatsId, id));
   }
 
-  function renderJoinRequests() {
-    const requests = Array.isArray(currentChat.joinRequests)
-      ? currentChat.joinRequests
-      : [];
-
-    $('requestsBox').classList.toggle('hidden', !requests.length);
+  async function renderRequests() {
     $('requestsList').replaceChildren();
+
+    if (!currentChat || !isOwner(currentChat)) return;
+
+    const chatId = currentChat.$id;
+    const requests = requestsOf(currentChat);
+
+    if (!requests.length) {
+      const text = document.createElement('div');
+      text.className = 'note';
+      text.textContent = 'Заявок пока нет';
+      $('requestsList').append(text);
+      return;
+    }
 
     for (const requesterId of requests) {
       const row = document.createElement('div');
@@ -1219,81 +1194,52 @@ body.light .request-item {
       const label = document.createElement('span');
       label.textContent = 'ID: ' + requesterId;
 
-      const button = document.createElement('button');
-      button.className = 'primary';
-      button.type = 'button';
-      button.textContent = 'Принять';
+      const buttons = document.createElement('div');
+      buttons.className = 'stack';
 
-      button.addEventListener('click', () => {
-        action(button, async () => {
-          if (!isOwner(currentChat)) {
-            throw new Error('Принимать заявки может только владелец чата');
-          }
+      for (const accept of [true, false]) {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = accept ? 'primary' : 'danger';
+        button.textContent = accept ? 'Принять' : 'Отклонить';
 
-          const members = Array.isArray(currentChat.memberIds)
-            ? currentChat.memberIds
-            : [];
+        button.addEventListener('click', () => {
+          action(button, async () => {
+            const chat = await freshChat(chatId);
 
-          const requests = Array.isArray(currentChat.joinRequests)
-            ? currentChat.joinRequests
-            : [];
-
-          currentChat = await api(
-            documentsPath(CONFIG.chatsId) + '/' +
-              encodeURIComponent(currentChat.$id),
-            'PATCH',
-            {
-              data: {
-                memberIds: [...members, requesterId],
-                joinRequests: requests.filter(id => id !== requesterId)
-              }
+            if (!isOwner(chat)) {
+              throw new Error('Только владелец может управлять заявками');
             }
-          );
 
-          renderJoinRequests();
-          await loadChats();
+            const patch = {
+              joinRequests: requestsOf(chat).filter(id => id !== requesterId)
+            };
+
+            if (accept) {
+              patch.memberIds = [
+                ...new Set([...membersOf(chat), requesterId])
+              ];
+            }
+
+            const updated = await api(
+              documentPath(CONFIG.chatsId, chatId),
+              'PATCH',
+              { data: patch }
+            );
+
+            if (currentChat?.$id === chatId) currentChat = updated;
+
+            await renderRequests();
+            await loadChats();
+          });
         });
-      });
 
-      row.append(label, button);
+        buttons.append(button);
+      }
+
+      row.append(label, buttons);
       $('requestsList').append(row);
     }
-  }
-
-  function getQueryParam(name) {
-    return new URLSearchParams(window.location.search).get(name);
-  }
-
-  async function handlePasswordRecovery() {
-    const userId = getQueryParam('userId');
-    const secret = getQueryParam('secret');
-
-    if (!userId || !secret) return;
-
-    $('resetDialog').showModal();
-
-    $('resetForm').addEventListener('submit', event => {
-      event.preventDefault();
-
-      action(event.submitter, async () => {
-        const password = $('newPasswordInput').value;
-
-        if (password.length < 8) {
-          throw new Error('Пароль должен быть минимум из 8 символов');
-        }
-
-        await api('/account/recovery', 'PUT', {
-          userId,
-          secret,
-          password
-        });
-
-        history.replaceState({}, '', window.location.pathname);
-
-        $('resetDialog').close();
-        status('Пароль изменён. Теперь войди с email и новым паролем.');
-      });
-    });
   }
 
   $('authForm').addEventListener('submit', event => {
@@ -1303,15 +1249,10 @@ body.light .request-item {
       const email = $('emailInput').value.trim();
       const password = $('passwordInput').value;
 
-      if (!email || !password) {
-        throw new Error('Введи email и пароль');
-      }
+      if (!email || !password) throw new Error('Введи email и пароль');
 
       await api('/account/sessions/email', 'POST', { email, password });
-
-      await new Promise(resolve => setTimeout(resolve, 500));
-
-      await enterApp(await api('/account'));
+      await enterApp(await getAccountAfterLogin());
     });
   });
 
@@ -1321,51 +1262,465 @@ body.light .request-item {
 
       const email = $('emailInput').value.trim();
       const password = $('passwordInput').value;
-      const name = $('nameInput').value.trim() || email.split('@')[0];
+      const name = $('nameInput').value.trim() || 'Пользователь';
 
       if (!email || password.length < 8) {
         throw new Error('Нужны email и пароль минимум из 8 символов');
       }
 
       await api('/account', 'POST', {
-        userId: newId(),
-        email,
-        password,
-        name
+        userId: newId(), email, password, name
       });
 
       await api('/account/sessions/email', 'POST', { email, password });
-
-      await new Promise(resolve => setTimeout(resolve, 500));
-
-      const account = await api('/account');
-
-      await api(
-        documentsPath(CONFIG.usersId),
-        'POST',
-        {
-          documentId: account.$id,
-          data: {
-            userId: account.$id,
-            name: account.name || email.split('@')[0]
-          },
-          permissions: []
-        }
-      );
-
-      await enterApp(account);
+      await enterApp(await getAccountAfterLogin());
     });
   });
 
   $('guestButton').addEventListener('click', () => {
     action($('guestButton'), async () => {
       await api('/account/sessions/anonymous', 'POST', {});
+      await enterApp(await getAccountAfterLogin());
+    });
+  });
 
-      await new Promise(resolve => setTimeout(resolve, 500));
+  $('logoutButton').addEventListener('click', () => {
+    if (guest && !confirm(
+      'После выхода доступ к этому гостю может быть потерян. Продолжить?'
+    )) return;
 
-      const account = await api('/account');
+    action($('logoutButton'), async () => {
+      try {
+        await api('/account/sessions/current', 'DELETE');
+      } catch (error) {
+        if (error.code !== 401) throw error;
+        clearStoredSession();
+      }
 
-      await enterApp(account);
+      clearInterval(timer);
+      sessionEpoch++;
+
+      user = null;
+      guest = false;
+      chatItems = [];
+      closeChat();
+
+      document.querySelectorAll('dialog[open]').forEach(d => d.close());
+      $('appScreen').classList.add('hidden');
+      $('authScreen').classList.remove('hidden');
+
+      status('Ты вышел');
+    });
+  });
+
+  $('createButton').addEventListener('click', () => {
+    $('createDialog').showModal();
+  });
+
+  $('createForm').addEventListener('submit', event => {
+    event.preventDefault();
+
+    action(event.submitter, async () => {
+      const title = $('titleInput').value.trim();
+      if (!title) throw new Error('Введи название');
+
+      const chat = await createChat({
+        title,
+        inviteCode: inviteCode(),
+        ownerId: user.$id,
+        memberIds: [user.$id],
+        allowedUserIds: [],
+        isPrivate: $('createPrivateInput').checked,
+        joinRequests: []
+      });
+
+      $('createDialog').close();
+      $('createForm').reset();
+
+      await loadChats();
+      await openChat(chat);
+    });
+  });
+
+  $('searchButton').addEventListener('click', () => {
+    $('searchInput').value = '';
+    $('searchResult').textContent = '';
+    $('myIdInput').value = user.$id;
+    $('searchDialog').showModal();
+  });
+
+  $('searchForm').addEventListener('submit', event => {
+    event.preventDefault();
+
+    action(event.submitter, async () => {
+      const id = $('searchInput').value.trim();
+
+      if (id === user.$id) {
+        $('searchResult').textContent = 'Это твой ID';
+        return;
+      }
+
+      const result = await api(
+        documentsPath(CONFIG.usersId),
+        'GET',
+        undefined,
+        [equal('userId', id), limit(1)]
+      );
+
+      const found = result.documents?.[0];
+
+      if (!found) {
+        $('searchResult').textContent = 'Пользователь не найден';
+        return;
+      }
+
+      await openDirectChat(found);
+    });
+  });
+
+  $('joinButton').addEventListener('click', () => {
+    $('joinTitle').textContent = guest
+      ? 'По коду приглашения'
+      : 'По ID чата';
+
+    $('joinInput').placeholder = guest ? 'Код приглашения' : 'ID чата';
+    $('joinInput').value = '';
+    $('joinDialog').showModal();
+  });
+
+  $('joinForm').addEventListener('submit', event => {
+    event.preventDefault();
+
+    action(event.submitter, async () => {
+      const value = $('joinInput').value.trim();
+      if (!value) throw new Error('Заполни поле');
+
+      let chat;
+
+      if (guest) {
+        const result = await api(
+          documentsPath(CONFIG.chatsId),
+          'GET',
+          undefined,
+          [equal('inviteCode', value.toUpperCase()), limit(1)]
+        );
+
+        chat = result.documents?.[0];
+        if (!chat) throw new Error('Приглашение не найдено');
+      } else {
+        chat = await freshChat(value);
+      }
+
+      if (isDirect(chat)) {
+        throw new Error('В личный чат нельзя вступить по приглашению');
+      }
+
+      if (!membersOf(chat).includes(user.$id)) {
+        if (chat.isPrivate) {
+          if (!requestsOf(chat).includes(user.$id)) {
+            await api(
+              documentPath(CONFIG.chatsId, chat.$id),
+              'PATCH',
+              {
+                data: {
+                  joinRequests: [...requestsOf(chat), user.$id]
+                }
+              }
+            );
+          }
+
+          $('joinDialog').close();
+          status('Заявка отправлена. После принятия чат появится в списке.');
+          return;
+        }
+
+        chat = await api(
+          documentPath(CONFIG.chatsId, chat.$id),
+          'PATCH',
+          { data: { memberIds: [...membersOf(chat), user.$id] } }
+        );
+      }
+
+      $('joinDialog').close();
+      await loadChats();
+      await openChat(chat);
+    });
+  });
+
+  $('chatSettingsButton').addEventListener('click', () => {
+    action($('chatSettingsButton'), async () => {
+      if (!currentChat) return;
+
+      const chat = await freshChat(currentChat.$id);
+      if (!isOwner(chat)) throw new Error('Только для владельца');
+
+      currentChat = chat;
+      $('chatTitleInput').value = chat.title;
+      $('privateCheckbox').checked = !!chat.isPrivate;
+
+      await renderRequests();
+      $('chatSettingsDialog').showModal();
+    });
+  });
+
+  $('reloadRequestsButton').addEventListener('click', () => {
+    action($('reloadRequestsButton'), async () => {
+      if (!currentChat) return;
+      currentChat = await freshChat(currentChat.$id);
+      await renderRequests();
+    });
+  });
+
+  $('chatSettingsForm').addEventListener('submit', event => {
+    event.preventDefault();
+
+    action(event.submitter, async () => {
+      if (!currentChat) return;
+
+      const chat = await freshChat(currentChat.$id);
+      if (!isOwner(chat)) throw new Error('Только владелец меняет настройки');
+
+      const title = $('chatTitleInput').value.trim();
+      if (!title) throw new Error('Введи название');
+
+      currentChat = await api(
+        documentPath(CONFIG.chatsId, chat.$id),
+        'PATCH',
+        {
+          data: {
+            title,
+            isPrivate: $('privateCheckbox').checked
+          }
+        }
+      );
+
+      updateHeader();
+      await loadChats();
+      $('chatSettingsDialog').close();
+      status('Настройки сохранены');
+    });
+  });
+
+  $('leaveChatButton').addEventListener('click', () => {
+    if (!currentChat || !confirm('Выйти из этого чата?')) return;
+
+    action($('leaveChatButton'), async () => {
+      const chat = await freshChat(currentChat.$id);
+
+      if (isOwner(chat)) throw new Error('Владелец может удалить чат');
+
+      await api(
+        documentPath(CONFIG.chatsId, chat.$id),
+        'PATCH',
+        {
+          data: {
+            memberIds: membersOf(chat).filter(id => id !== user.$id)
+          }
+        }
+      );
+
+      closeChat();
+      await loadChats();
+      status('Ты вышел из чата');
+    });
+  });
+
+  $('deleteChatButton').addEventListener('click', () => {
+    if (!currentChat) return;
+
+    if (!confirm(
+      'Удалить документ чата? Сообщения будут удалены только при наличии ' +
+      'прав на их удаление. Действие нельзя отменить.'
+    )) return;
+
+    action($('deleteChatButton'), async () => {
+      const chat = await freshChat(currentChat.$id);
+
+      if (!isOwner(chat) || isGeneral(chat)) {
+        throw new Error('Удалить этот чат нельзя');
+      }
+
+      const chatId = chat.$id;
+
+      // Сначала удаляем сам чат, чтобы при отсутствии прав
+      // не удалить сообщения из остающегося чата.
+      await api(documentPath(CONFIG.chatsId, chatId), 'DELETE');
+
+      closeChat();
+      await loadChats();
+
+      let cursor = null;
+      let deleted = 0;
+      let skipped = 0;
+
+      while (true) {
+        const queries = [
+          equal('roomId', chatId),
+          { method: 'orderAsc', attribute: '$id' },
+          limit(100)
+        ];
+
+        if (cursor) {
+          queries.push({ method: 'cursorAfter', values: [cursor] });
+        }
+
+        const result = await api(
+          documentsPath(CONFIG.messagesId),
+          'GET',
+          undefined,
+          queries
+        );
+
+        const batch = result.documents || [];
+        if (!batch.length) break;
+
+        for (let index = 0; index < batch.length; index++) {
+          const message = batch[index];
+          const last = index === batch.length - 1;
+
+          // Последний документ страницы временно оставляем,
+          // чтобы сохранить действующий курсор.
+          if (last) continue;
+
+          try {
+            await api(documentPath(CONFIG.messagesId, message.$id), 'DELETE');
+            deleted++;
+          } catch (error) {
+            if (error.code === 401 || error.code === 403) skipped++;
+            else if (error.code !== 404) throw error;
+          }
+        }
+
+        const lastMessage = batch[batch.length - 1];
+
+        // Следующую страницу получаем до удаления документа-курсора.
+        const next = await api(
+          documentsPath(CONFIG.messagesId),
+          'GET',
+          undefined,
+          [
+            equal('roomId', chatId),
+            { method: 'orderAsc', attribute: '$id' },
+            { method: 'cursorAfter', values: [lastMessage.$id] },
+            limit(1)
+          ]
+        );
+
+        if (next.documents?.length) {
+          cursor = lastMessage.$id;
+          skipped++;
+        } else {
+          try {
+            await api(
+              documentPath(CONFIG.messagesId, lastMessage.$id),
+              'DELETE'
+            );
+            deleted++;
+          } catch (error) {
+            if (error.code === 401 || error.code === 403) skipped++;
+            else if (error.code !== 404) throw error;
+          }
+          break;
+        }
+      }
+
+      status(
+        'Чат удалён. Удалено сообщений: ' + deleted +
+        (skipped
+          ? '. Осталось сообщений в базе: не менее ' + skipped +
+            '. Полная очистка требует серверной операции.'
+          : '')
+      );
+    });
+  });
+
+  $('messageForm').addEventListener('submit', event => {
+    event.preventDefault();
+
+    action(event.submitter, async () => {
+      if (!user || !currentChat) return;
+
+      const chat = currentChat;
+      const text = $('messageInput').value.trim();
+      if (!text) return;
+
+      const permissions = [
+        'delete("user:' + user.$id + '")'
+      ];
+
+      if (isGeneral(chat)) {
+        permissions.push('read("users")');
+      } else {
+        for (const id of [...new Set(membersOf(chat))]) {
+          permissions.push('read("user:' + id + '")');
+        }
+      }
+
+      await api(documentsPath(CONFIG.messagesId), 'POST', {
+        documentId: newId(),
+        data: {
+          roomId: chat.$id,
+          senderId: user.$id,
+          senderName: (
+            guest
+              ? 'Гость ' + user.$id.slice(0, 6)
+              : (user.name || 'Пользователь')
+          ).slice(0, 64),
+          text
+        },
+        permissions
+      });
+
+      if ($('messageInput').value.trim() === text) {
+        $('messageInput').value = '';
+      }
+
+      if (currentChat?.$id === chat.$id) await loadMessages(true);
+    });
+  });
+
+  $('inviteButton').addEventListener('click', () => {
+    if (!currentChat || isDirect(currentChat)) return;
+
+    $('inviteCodeInput').value = currentChat.inviteCode || '';
+    $('inviteIdInput').value = currentChat.$id;
+    $('inviteDialog').showModal();
+  });
+
+  async function copyField(id) {
+    const input = $(id);
+
+    try {
+      await navigator.clipboard.writeText(input.value);
+      status('Скопировано');
+    } catch {
+      input.focus();
+      input.select();
+      status('Текст выделен. Скопируй вручную.');
+    }
+  }
+
+  $('copyMyIdButton').addEventListener('click', () => copyField('myIdInput'));
+  $('copyCodeButton').addEventListener('click', () => copyField('inviteCodeInput'));
+  $('copyIdButton').addEventListener('click', () => copyField('inviteIdInput'));
+
+  $('settingsButton').addEventListener('click', () => {
+    $('settingsDialog').showModal();
+  });
+
+  $('themeButton').addEventListener('click', () => {
+    applyTheme(
+      document.documentElement.classList.contains('light') ? 'dark' : 'light'
+    );
+  });
+
+  $('sidebarToggle').addEventListener('click', toggleSidebar);
+  $('sidebarSettingsButton').addEventListener('click', toggleSidebar);
+
+  $('refreshButton').addEventListener('click', () => {
+    action($('refreshButton'), async () => {
+      await loadChats();
+      if (currentChat) await loadMessages(true);
     });
   });
 
@@ -1378,389 +1733,62 @@ body.light .request-item {
     event.preventDefault();
 
     action(event.submitter, async () => {
-      const email = $('forgotEmailInput').value.trim();
-
-      if (!email) throw new Error('Введи email');
-
       await api('/account/recovery', 'POST', {
-        email,
+        email: $('forgotEmailInput').value.trim(),
         url: CONFIG.recoveryUrl
       });
 
       $('forgotDialog').close();
-      status('Письмо для восстановления пароля отправлено. Проверь почту.');
-    });
-  });
-
-  $('logoutButton').addEventListener('click', () => {
-    action($('logoutButton'), async () => {
-      await api('/account/sessions/current', 'DELETE');
-
-      closeChat();
-      chatItems = [];
-      user = null;
-      guest = false;
-
-      $('appScreen').classList.add('hidden');
-      $('authScreen').classList.remove('hidden');
-
-      status('Ты вышел. У гостя без привязанного аккаунта доступ к прежней сессии не восстановится.');
-    });
-  });
-
-  $('createButton').addEventListener('click', () => {
-    $('createDialog').showModal();
-  });
-
-  $('createForm').addEventListener('submit', event => {
-    event.preventDefault();
-    const button = event.submitter;
-
-    action(button, async () => {
-      const title = $('titleInput').value.trim();
-
-      if (!title) throw new Error('Введи название чата');
-
-      const chat = await api(
-        documentsPath(CONFIG.chatsId),
-        'POST',
-        {
-          documentId: newId(),
-          data: {
-            title,
-            inviteCode: inviteCode(),
-            ownerId: user.$id,
-            memberIds: [user.$id],
-            allowedUserIds: [],
-            isPrivate: false,
-            joinRequests: []
-          },
-          permissions: []
-        }
+      status(
+        'Запрос отправлен. Проверь почту и папку «Спам». ' +
+        'Не пересылай ссылку из письма.'
       );
-
-      $('createDialog').close();
-      $('titleInput').value = '';
-
-      await loadChats();
-      await openChat(chat);
     });
   });
 
-  $('settingsButton').addEventListener('click', () => {
-    $('settingsDialog').showModal();
-  });
+  function prepareRecovery() {
+    const url = new URL(location.href);
+    const userId = url.searchParams.get('userId');
+    const secret = url.searchParams.get('secret');
 
-  $('themeButton').addEventListener('click', () => {
-    const current = localStorage.getItem('datachats-theme') || 'dark';
-    applyTheme(current === 'light' ? 'dark' : 'light');
-  });
+    if (!userId || !secret) return false;
 
-  $('sidebarSettingsButton').addEventListener('click', toggleSidebar);
-  $('sidebarToggle').addEventListener('click', toggleSidebar);
+    recovery = { userId, secret };
 
-  $('chatSettingsButton').addEventListener('click', openChatSettings);
+    url.searchParams.delete('userId');
+    url.searchParams.delete('secret');
+    url.searchParams.delete('expire');
 
-  $('chatSettingsForm').addEventListener('submit', event => {
-    event.preventDefault();
+    history.replaceState({}, '', url.pathname + url.search + url.hash);
 
-    action(event.submitter, async () => {
-      if (!currentChat) return;
-
-      if (!isOwner(currentChat)) {
-        throw new Error('Изменять настройки может только владелец чата');
-      }
-
-      const title = $('chatTitleInput').value.trim();
-
-      if (!title) throw new Error('Введи название чата');
-
-      currentChat = await api(
-        documentsPath(CONFIG.chatsId) + '/' +
-          encodeURIComponent(currentChat.$id),
-        'PATCH',
-        {
-          data: {
-            title,
-            isPrivate: $('privateCheckbox').checked
-          }
-        }
-      );
-
-      $('chatTitle').textContent = currentChat.title;
-      renderJoinRequests();
-      await loadChats();
-      status('Настройки чата сохранены');
-    });
-  });
-
-  $('leaveChatButton').addEventListener('click', () => {
-    if (!currentChat || !confirm('Выйти из этого чата?')) return;
-
-    action($('leaveChatButton'), async () => {
-      if (isOwner(currentChat)) {
-        throw new Error('Владелец не может выйти из чата. Он может удалить его.');
-      }
-
-      const members = Array.isArray(currentChat.memberIds)
-        ? currentChat.memberIds
-        : [];
-
-      await api(
-        documentsPath(CONFIG.chatsId) + '/' +
-          encodeURIComponent(currentChat.$id),
-        'PATCH',
-        {
-          data: {
-            memberIds: members.filter(id => id !== user.$id)
-          }
-        }
-      );
-
-      closeChat();
-      await loadChats();
-      status('Ты вышел из чата');
-    });
-  });
-
-  $('deleteChatButton').addEventListener('click', () => {
-    if (!currentChat || !isOwner(currentChat)) return;
-
-    if (!confirm('Удалить чат и все его сообщения? Это нельзя отменить.')) {
-      return;
-    }
-
-    action($('deleteChatButton'), async () => {
-      const chatId = currentChat.$id;
-
-      const messages = await api(
-        documentsPath(CONFIG.messagesId),
-        'GET',
-        undefined,
-        [
-          equal('roomId', chatId),
-          limit(100)
-        ]
-      );
-
-      for (const message of messages.documents || []) {
-        await api(
-          documentsPath(CONFIG.messagesId) + '/' +
-            encodeURIComponent(message.$id),
-          'DELETE'
-        );
-      }
-
-      await api(
-        documentsPath(CONFIG.chatsId) + '/' + encodeURIComponent(chatId),
-        'DELETE'
-      );
-
-      closeChat();
-      await loadChats();
-      status('Чат удалён');
-    });
-  });
-
-  $('searchButton').addEventListener('click', () => {
-    $('searchInput').value = '';
-    $('searchResult').textContent = '';
-    $('myIdLabel').textContent = user?.$id || '';
-    $('searchDialog').showModal();
-  });
-
-  $('copyMyIdButton').addEventListener('click', () => {
-    copyField('myIdLabel');
-  });
-
-  $('searchForm').addEventListener('submit', event => {
-    event.preventDefault();
-
-    action(event.submitter, async () => {
-      const value = $('searchInput').value.trim();
-
-      if (!value) throw new Error('Введи ID пользователя');
-
-      if (value === user.$id) {
-        $('searchResult').textContent = 'Это твой собственный ID.';
-        return;
-      }
-
-      const data = await api(
-        documentsPath(CONFIG.usersId),
-        'GET',
-        undefined,
-        [equal('userId', value), limit(1)]
-      );
-
-      const found = data.documents?.[0];
-
-      if (!found) {
-        $('searchResult').textContent = 'Пользователь с таким ID не найден.';
-        return;
-      }
-
-      $('searchResult').textContent =
-        'Найден: ' + (found.name || found.userId);
-
-      await openDirectChat(found);
-    });
-  });
-
-  $('joinButton').addEventListener('click', () => {
-    $('joinTitle').textContent = guest
-      ? 'Вход по приглашению'
-      : 'Вход по ID чата';
-
-    $('joinInput').placeholder = guest ? 'Код приглашения' : 'ID чата';
-    $('joinInput').value = '';
-    $('joinDialog').showModal();
-  });
-
-  $('joinForm').addEventListener('submit', event => {
-    event.preventDefault();
-
-    action(event.submitter, async () => {
-      const value = $('joinInput').value.trim();
-
-      if (!value) throw new Error('Заполни поле');
-
-      let chat;
-
-      if (guest) {
-        const data = await api(
-          documentsPath(CONFIG.chatsId),
-          'GET',
-          undefined,
-          [equal('inviteCode', value.toUpperCase()), limit(1)]
-        );
-
-        chat = data.documents?.[0];
-
-        if (!chat) throw new Error('Приглашение не найдено');
-      } else {
-        chat = await api(
-          documentsPath(CONFIG.chatsId) + '/' + encodeURIComponent(value)
-        );
-      }
-
-      const members = Array.isArray(chat.memberIds) ? chat.memberIds : [];
-
-      if (members.includes(user.$id)) {
-        $('joinDialog').close();
-        await loadChats();
-        await openChat(chat);
-        return;
-      }
-
-      if (chat.isPrivate) {
-        const requests = Array.isArray(chat.joinRequests)
-          ? chat.joinRequests
-          : [];
-
-        if (!requests.includes(user.$id)) {
-          await api(
-            documentsPath(CONFIG.chatsId) + '/' +
-              encodeURIComponent(chat.$id),
-            'PATCH',
-            {
-              data: {
-                joinRequests: [...requests, user.$id]
-              }
-            }
-          );
-        }
-
-        $('joinDialog').close();
-        status('Заявка на вход отправлена. Ждём подтверждения владельца.');
-        return;
-      }
-
-      chat = await api(
-        documentsPath(CONFIG.chatsId) + '/' + encodeURIComponent(chat.$id),
-        'PATCH',
-        {
-          data: {
-            memberIds: [...members, user.$id]
-          }
-        }
-      );
-
-      $('joinDialog').close();
-      await loadChats();
-      await openChat(chat);
-    });
-  });
-
-  $('messageForm').addEventListener('submit', event => {
-    event.preventDefault();
-
-    action(event.submitter, async () => {
-      if (!currentChat || !user) return;
-
-      const text = $('messageInput').value.trim();
-
-      if (!text) return;
-
-      const roomId = currentChat.$id;
-
-      await api(
-        documentsPath(CONFIG.messagesId),
-        'POST',
-        {
-          documentId: newId(),
-          data: {
-            roomId,
-            senderId: user.$id,
-            senderName: guest
-              ? 'Гость ' + user.$id.slice(0, 6)
-              : (user.name || 'Пользователь'),
-            text
-          },
-          permissions: [
-            'delete("user:' + user.$id + '")'
-          ]
-        }
-      );
-
-      if ($('messageInput').value.trim() === text) {
-        $('messageInput').value = '';
-      }
-
-      if (currentChat?.$id === roomId) {
-        await loadMessages(true);
-      }
-    });
-  });
-
-  $('inviteButton').addEventListener('click', () => {
-    if (!currentChat) return;
-
-    $('inviteCodeInput').value = currentChat.inviteCode;
-    $('inviteIdInput').value = currentChat.$id;
-    $('inviteDialog').showModal();
-  });
-
-  async function copyField(id) {
-    const element = $(id);
-    const text = element.value || element.textContent;
-
-    try {
-      await navigator.clipboard.writeText(text);
-      status('Скопировано');
-    } catch {
-      if (element.select) element.select();
-      status('Выделил текст. Нажми Ctrl+C или скопируй вручную.');
-    }
+    $('resetStatus').textContent = '';
+    $('resetDialog').showModal();
+    return true;
   }
 
-  $('copyCodeButton').addEventListener('click', () => copyField('inviteCodeInput'));
-  $('copyIdButton').addEventListener('click', () => copyField('inviteIdInput'));
+  $('resetForm').addEventListener('submit', event => {
+    event.preventDefault();
 
-  $('refreshButton').addEventListener('click', () => {
-    action($('refreshButton'), async () => {
-      await loadChats();
-      if (currentChat) await loadMessages(true);
+    action(event.submitter, async () => {
+      if (!recovery) throw new Error('Запроси новую ссылку восстановления');
+
+      const password = $('newPasswordInput').value;
+
+      if (password !== $('repeatPasswordInput').value) {
+        throw new Error('Пароли не совпадают');
+      }
+
+      await api('/account/recovery', 'PUT', {
+        userId: recovery.userId,
+        secret: recovery.secret,
+        password
+      });
+
+      recovery = null;
+      $('resetForm').reset();
+      $('resetDialog').close();
+
+      status('Пароль изменён. Войди по email и новому паролю.');
     });
   });
 
@@ -1769,28 +1797,30 @@ body.light .request-item {
   });
 
   async function init() {
+    applyTheme(readStorage('datachats-theme') || 'dark');
+
+    applySidebar(
+      (readStorage('datachats-sidebar') || 'open') === 'open'
+    );
+
+    if (prepareRecovery()) return;
+
     status('Проверяю сессию…');
 
     try {
-      const account = await api('/account');
-      status('');
-      await enterApp(account);
+      await enterApp(await api('/account'));
     } catch (error) {
       if (error.code === 401) {
+        clearStoredSession();
         status('');
       } else {
-        console.error(error);
         status(error.message, true);
       }
     }
   }
 
-  handlePasswordRecovery();
-  applyTheme(localStorage.getItem('datachats-theme') || 'dark');
-  applySidebar((localStorage.getItem('datachats-sidebar') || 'open') === 'open');
   init();
 })();
 </script>
-
 </body>
 </html>
