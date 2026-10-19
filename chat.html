@@ -166,6 +166,15 @@ input[type="checkbox"] { width: 20px; height: 20px; }
 }
 
 .card h1 { margin-top: 0; }
+  
+  .logo {
+  display: block;
+  width: 96px;
+  height: 96px;
+  margin: 0 auto 16px;
+  object-fit: contain;
+  border-radius: 20px;
+}
 .stack { display: grid; gap: 12px; }
 .note { font-size: 13px; line-height: 1.5; }
 
@@ -414,8 +423,9 @@ dialog::backdrop { background: #0009; }
 <div id="status" class="status hidden" role="status"></div>
 
 <section id="authScreen" class="auth">
-  <div class="card">
-    <h1>DataChats</h1>
+ <div class="card">
+  <img src="logo.png" alt="Логотип DeepChat" class="logo">
+  <h1>DeepChat</h1>
     <p class="note">
       Войди по email и паролю, зарегистрируйся или продолжи как гость.
     </p>
