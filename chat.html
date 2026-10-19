@@ -462,7 +462,7 @@ body.light .request-item {
 
 <header class="topbar">
   <div class="brand">DataChats</div>
-  <div class="build">Версия REST-7</div>
+  <div class="build">Версия REST-8</div>
 </header>
 
 <div id="status" class="status hidden" role="status"></div>
@@ -1308,6 +1308,9 @@ body.light .request-item {
       }
 
       await api('/account/sessions/email', 'POST', { email, password });
+
+      await new Promise(resolve => setTimeout(resolve, 500));
+
       await enterApp(await api('/account'));
     });
   });
@@ -1333,6 +1336,8 @@ body.light .request-item {
 
       await api('/account/sessions/email', 'POST', { email, password });
 
+      await new Promise(resolve => setTimeout(resolve, 500));
+
       const account = await api('/account');
 
       await api(
@@ -1355,7 +1360,12 @@ body.light .request-item {
   $('guestButton').addEventListener('click', () => {
     action($('guestButton'), async () => {
       await api('/account/sessions/anonymous', 'POST', {});
-      await enterApp(await api('/account'));
+
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      const account = await api('/account');
+
+      await enterApp(account);
     });
   });
 
