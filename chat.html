@@ -1854,8 +1854,9 @@ dialog::backdrop { background: #0009; }
       if (!text) return;
 
       const permissions = [
-        'delete("user:' + user.$id + '")'
-      ];
+  'delete("user:' + user.$id + '")',
+  'read("users")'
+];
 
       if (isGeneral(chat)) {
         permissions.push('read("users")');
