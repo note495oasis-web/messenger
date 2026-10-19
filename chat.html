@@ -1319,6 +1319,176 @@ const CONFIG = {
 
     if (force || nearBottom) box.scrollTop = box.scrollHeight;
   }
+    let incomingCall = null;
+  let callPollingStarted = false;
+
+  function ensureCallOverlay() {
+    if ($('callOverlay')) return;
+
+    const overlay = document.createElement('div');
+    overlay.id = 'callOverlay';
+    overlay.style.cssText = [
+      'position:fixed', 'inset:0', 'z-index:9999',
+      'display:none', 'align-items:center', 'justify-content:center',
+      'background:rgba(0,0,0,.55)'
+    ].join(';');
+
+    overlay.innerHTML = `
+      <div style="background:#fff;color:#111;padding:24px;border-radius:16px;
+        width:min(92vw,360px);text-align:center;font-family:inherit">
+        <div id="callTitle" style="font-size:18px;font-weight:700;margin-bottom:8px">
+          Входящий звонок
+        </div>
+        <div id="callSubtitle" style="opacity:.7;margin-bottom:20px"></div>
+        <div style="display:flex;gap:12px;justify-content:center">
+          <button id="declineCall" style="padding:10px 16px;border-radius:10px;
+            border:1px solid #ddd;background:#f3f4f6">Отклонить</button>
+          <button id="acceptCall" style="padding:10px 16px;border-radius:10px;
+            border:0;background:#16a34a;color:#fff">Принять</button>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(overlay);
+
+    $('acceptCall').addEventListener('click', async () => {
+      if (!incomingCall) return;
+      const call = incomingCall;
+
+      try {
+        await api(
+          documentsPath(CONFIG.callsId) + '/' + call.$id,
+          'PATCH',
+          { data: { status: 'accepted' } }
+        );
+
+        incomingCall = null;
+        $('callOverlay').style.display = 'none';
+        alert('Звонок принят. Звук подключим на следующем шаге.');
+      } catch (error) {
+        alert('Не удалось принять звонок: ' + error.message);
+      }
+    });
+
+    $('declineCall').addEventListener('click', async () => {
+      if (!incomingCall) return;
+      const call = incomingCall;
+
+      try {
+        await api(
+          documentsPath(CONFIG.callsId) + '/' + call.$id,
+          'PATCH',
+          { data: { status: 'declined' } }
+        );
+      } catch (error) {
+        console.error(error);
+      }
+
+      incomingCall = null;
+      $('callOverlay').style.display = 'none';
+    });
+  }
+
+  function updateCallButton() {
+    let button = $('startCallButton');
+
+    if (!button) {
+      button = document.createElement('button');
+      button.id = 'startCallButton';
+      button.textContent = 'Позвонить';
+      button.style.cssText = [
+        'position:fixed', 'right:20px', 'bottom:20px', 'z-index:9998',
+        'padding:12px 18px', 'border-radius:999px', 'border:0',
+        'background:#2563eb', 'color:#fff', 'font-weight:600',
+        'box-shadow:0 8px 24px rgba(0,0,0,.2)'
+      ].join(';');
+
+      button.addEventListener('click', startAudioCall);
+      document.body.appendChild(button);
+    }
+
+    const canCall =
+      user &&
+      !guest &&
+      currentChat &&
+      !isGeneral(currentChat) &&
+      membersOf(currentChat).some(id => id && id !== user.$id);
+
+    button.style.display = canCall ? 'block' : 'none';
+  }
+
+  async function startAudioCall() {
+    if (!user || guest || !currentChat || isGeneral(currentChat)) return;
+
+    const targetId = membersOf(currentChat)
+      .find(id => id && id !== user.$id);
+
+    if (!targetId) {
+      alert('В этом чате нет другого пользователя.');
+      return;
+    }
+
+    try {
+      await api(documentsPath(CONFIG.callsId), 'POST', {
+        documentId: newId(),
+        data: {
+          roomId: currentChat.$id,
+          callerId: user.$id,
+          callerName: (user.name || 'Пользователь').slice(0, 64),
+          targetId,
+          status: 'ringing',
+          createdAt: Math.floor(Date.now() / 1000)
+        },
+        permissions: [
+          'read("user:' + user.$id + '")',
+          'update("user:' + user.$id + '")',
+          'delete("user:' + user.$id + '")',
+          'read("user:' + targetId + '")',
+          'update("user:' + targetId + '")'
+        ]
+      });
+
+      alert('Звонок отправлен.');
+    } catch (error) {
+      alert('Не удалось начать звонок: ' + error.message);
+    }
+  }
+
+  async function checkIncomingCalls() {
+    ensureCallOverlay();
+    updateCallButton();
+
+    if (!user || guest || incomingCall) return;
+
+    try {
+      const data = await api(
+        documentsPath(CONFIG.callsId),
+        'GET',
+        undefined,
+        [
+          equal('targetId', user.$id),
+          equal('status', 'ringing'),
+          limit(1)
+        ]
+      );
+
+      const call = data.documents && data.documents[0];
+
+      if (call) {
+        incomingCall = call;
+        $('callTitle').textContent = 'Входящий звонок';
+        $('callSubtitle').textContent = call.callerName || 'Пользователь';
+        $('callOverlay').style.display = 'flex';
+      }
+    } catch (error) {
+      console.error('Не удалось проверить звонки:', error);
+    }
+  }
+
+  if (!callPollingStarted) {
+    callPollingStarted = true;
+    setInterval(checkIncomingCalls, 2500);
+  }
 
   async function createChat(data) {
     return api(documentsPath(CONFIG.chatsId), 'POST', {
