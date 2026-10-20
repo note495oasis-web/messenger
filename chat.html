@@ -1881,19 +1881,21 @@ const CONFIG = {
 
     if (!user || guest) return;
 
-    if (currentCall) {
-      try {
-        const call = await api(
-          documentPath(CONFIG.callsId, currentCall.id)
-        );
+if (currentCall) {
+  try {
+    const call = await api(
+      documentPath(CONFIG.callsId, currentCall.id)
+    );
 
-        if (
-          call.status === 'ended' ||
-          call.status === 'declined'
-        ) {
-          await closeCall();
-          return;
-        }
+    console.log('ТЕКУЩИЙ ЗВОНОК:', currentCall.id, 'роль:', currentCall.role, 'статус:', call.status);
+
+    if (
+      call.status === 'ended' ||
+      call.status === 'declined'
+    ) {
+      await closeCall();
+      return;
+    }
 
         if (currentCall.role === 'caller') {
           const answer = await findCallSignal(
