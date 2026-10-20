@@ -1390,22 +1390,85 @@ const CONFIG = {
     });
   }
 
+  function showCallChooser() {
+  if (!user || guest || !currentChat || isGeneral(currentChat)) return;
+
+  if ($('callChooser')) {
+    $('callChooser').remove();
+  }
+
+  const chooser = document.createElement('div');
+  chooser.id = 'callChooser';
+  chooser.style.cssText = [
+    'position:fixed', 'inset:0', 'z-index:9999',
+    'display:flex', 'align-items:center', 'justify-content:center',
+    'background:rgba(0,0,0,.55)'
+  ].join(';');
+
+  chooser.innerHTML = `
+    <div style="background:#fff;color:#111;padding:24px;border-radius:16px;
+      width:min(92vw,340px);text-align:center;font-family:inherit">
+      <div style="font-size:18px;font-weight:700;margin-bottom:18px">
+        Выбери тип звонка
+      </div>
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <button id="chooseAudioCall" style="padding:12px;border-radius:12px;
+          border:0;background:#2563eb;color:#fff;font-weight:600">
+          Аудиозвонок
+        </button>
+        <button id="chooseVideoCall" style="padding:12px;border-radius:12px;
+          border:1px solid #ddd;background:#f3f4f6;color:#111;
+          font-weight:600">
+          Видеозвонок
+        </button>
+        <button id="cancelCallChooser" style="padding:10px;border-radius:12px;
+          border:0;background:transparent;color:#666">
+          Отмена
+        </button>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(chooser);
+
+  $('chooseAudioCall').addEventListener('click', () => {
+    chooser.remove();
+    startAudioCall();
+  });
+
+  $('chooseVideoCall').addEventListener('click', () => {
+    chooser.remove();
+    alert('Видеозвонок подключим на следующем шаге.');
+  });
+
+  $('cancelCallChooser').addEventListener('click', () => {
+    chooser.remove();
+  });
+}
   function updateCallButton() {
     let button = $('startCallButton');
 
-    if (!button) {
+        if (!button) {
       button = document.createElement('button');
       button.id = 'startCallButton';
       button.textContent = 'Позвонить';
       button.style.cssText = [
-        'position:fixed', 'left:20px', 'bottom:20px', 'z-index:9998',
-        'padding:12px 18px', 'border-radius:999px', 'border:0',
-        'background:#2563eb', 'color:#fff', 'font-weight:600',
-        'box-shadow:0 8px 24px rgba(0,0,0,.2)'
+        'margin-left:12px', 'padding:6px 12px',
+        'border-radius:999px', 'border:0',
+        'background:#2563eb', 'color:#fff',
+        'font-weight:600', 'font-size:13px',
+        'cursor:pointer'
       ].join(';');
 
-      button.addEventListener('click', startAudioCall);
-      document.body.appendChild(button);
+button.addEventListener('click', showCallChooser);
+
+const heading = document.querySelector('.chat-heading');
+
+      if (heading) {
+        heading.appendChild(button);
+      } else {
+        document.body.appendChild(button);
+      }
     }
 
     const canCall =
