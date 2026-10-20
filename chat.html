@@ -1325,7 +1325,8 @@ const CONFIG = {
   let callPollingStarted = false;
   let peerConnection = null;
   let localStream = null;
-  let remoteAudio = null;
+  let remoteMedia = null;
+  let callMediaBox = null;
   let pendingCandidates = [];
   let processedSignals = new Set();
 
@@ -1391,64 +1392,65 @@ const CONFIG = {
   }
 
   function showCallChooser() {
-  if (!user || guest || !currentChat || isGeneral(currentChat)) return;
+    if (!user || guest || !currentChat || isGeneral(currentChat)) return;
 
-  if ($('callChooser')) {
-    $('callChooser').remove();
+    if ($('callChooser')) {
+      $('callChooser').remove();
+    }
+
+    const chooser = document.createElement('div');
+    chooser.id = 'callChooser';
+    chooser.style.cssText = [
+      'position:fixed', 'inset:0', 'z-index:9999',
+      'display:flex', 'align-items:center', 'justify-content:center',
+      'background:rgba(0,0,0,.55)'
+    ].join(';');
+
+    chooser.innerHTML = `
+      <div style="background:#fff;color:#111;padding:24px;border-radius:16px;
+        width:min(92vw,340px);text-align:center;font-family:inherit">
+        <div style="font-size:18px;font-weight:700;margin-bottom:18px">
+          Выбери тип звонка
+        </div>
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <button id="chooseAudioCall" style="padding:12px;border-radius:12px;
+            border:0;background:#2563eb;color:#fff;font-weight:600">
+            Аудиозвонок
+          </button>
+          <button id="chooseVideoCall" style="padding:12px;border-radius:12px;
+            border:1px solid #ddd;background:#f3f4f6;color:#111;
+            font-weight:600">
+            Видеозвонок
+          </button>
+          <button id="cancelCallChooser" style="padding:10px;border-radius:12px;
+            border:0;background:transparent;color:#666">
+            Отмена
+          </button>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(chooser);
+
+    $('chooseAudioCall').addEventListener('click', () => {
+      chooser.remove();
+      startCall('audio');
+    });
+
+    $('chooseVideoCall').addEventListener('click', () => {
+      chooser.remove();
+      startCall('video');
+    });
+
+    $('cancelCallChooser').addEventListener('click', () => {
+      chooser.remove();
+    });
   }
 
-  const chooser = document.createElement('div');
-  chooser.id = 'callChooser';
-  chooser.style.cssText = [
-    'position:fixed', 'inset:0', 'z-index:9999',
-    'display:flex', 'align-items:center', 'justify-content:center',
-    'background:rgba(0,0,0,.55)'
-  ].join(';');
-
-  chooser.innerHTML = `
-    <div style="background:#fff;color:#111;padding:24px;border-radius:16px;
-      width:min(92vw,340px);text-align:center;font-family:inherit">
-      <div style="font-size:18px;font-weight:700;margin-bottom:18px">
-        Выбери тип звонка
-      </div>
-      <div style="display:flex;flex-direction:column;gap:12px">
-        <button id="chooseAudioCall" style="padding:12px;border-radius:12px;
-          border:0;background:#2563eb;color:#fff;font-weight:600">
-          Аудиозвонок
-        </button>
-        <button id="chooseVideoCall" style="padding:12px;border-radius:12px;
-          border:1px solid #ddd;background:#f3f4f6;color:#111;
-          font-weight:600">
-          Видеозвонок
-        </button>
-        <button id="cancelCallChooser" style="padding:10px;border-radius:12px;
-          border:0;background:transparent;color:#666">
-          Отмена
-        </button>
-      </div>
-    </div>
-  `;
-
-  document.body.appendChild(chooser);
-
-  $('chooseAudioCall').addEventListener('click', () => {
-    chooser.remove();
-    startAudioCall();
-  });
-
-  $('chooseVideoCall').addEventListener('click', () => {
-    chooser.remove();
-    alert('Видеозвонок подключим на следующем шаге.');
-  });
-
-  $('cancelCallChooser').addEventListener('click', () => {
-    chooser.remove();
-  });
-}
   function updateCallButton() {
     let button = $('startCallButton');
 
-        if (!button) {
+    if (!button) {
       button = document.createElement('button');
       button.id = 'startCallButton';
       button.textContent = 'Позвонить';
@@ -1460,9 +1462,9 @@ const CONFIG = {
         'cursor:pointer'
       ].join(';');
 
-button.addEventListener('click', showCallChooser);
+      button.addEventListener('click', showCallChooser);
 
-const heading = document.querySelector('.chat-heading');
+      const heading = document.querySelector('.chat-heading');
 
       if (heading) {
         heading.appendChild(button);
@@ -1490,7 +1492,7 @@ const heading = document.querySelector('.chat-heading');
       button.textContent = 'Завершить звонок';
       button.style.cssText = [
         'position:fixed', 'left:50%', 'bottom:20px',
-        'transform:translateX(-50%)', 'z-index:9998',
+        'transform:translateX(-50%)', 'z-index:9999',
         'padding:12px 18px', 'border-radius:999px', 'border:0',
         'background:#dc2626', 'color:#fff', 'font-weight:600'
       ].join(';');
@@ -1505,12 +1507,55 @@ const heading = document.querySelector('.chat-heading');
     button.style.display = currentCall ? 'block' : 'none';
   }
 
-  async function getMicrophone() {
-    if (localStream) return localStream;
+  function ensureCallMediaBox(type) {
+    if (callMediaBox) return;
 
-    localStream = await navigator.mediaDevices.getUserMedia({
-      audio: true
-    });
+    callMediaBox = document.createElement('div');
+    callMediaBox.id = 'callMediaBox';
+    callMediaBox.style.cssText = [
+      'position:fixed', 'inset:0', 'z-index:9990',
+      'background:#000', 'display:flex',
+      'align-items:center', 'justify-content:center'
+    ].join(';');
+
+    if (type === 'video') {
+      callMediaBox.innerHTML = `
+        <video id="remoteVideo" autoplay playsinline
+          style="width:100%;height:100%;object-fit:contain"></video>
+        <video id="localVideo" autoplay playsinline muted
+          style="position:absolute;right:16px;bottom:90px;
+          width:min(28vw,220px);aspect-ratio:3/4;
+          border-radius:14px;object-fit:cover;
+          border:2px solid rgba(255,255,255,.35)"></video>
+      `;
+    } else {
+      callMediaBox.innerHTML = `
+        <div style="color:#fff;font-size:20px;font-weight:600">
+          Аудиозвонок
+        </div>
+      `;
+    }
+
+    document.body.appendChild(callMediaBox);
+  }
+
+  async function getCallMedia(type) {
+    if (localStream) {
+      localStream.getTracks().forEach(track => track.stop());
+    }
+
+    localStream = await navigator.mediaDevices.getUserMedia(
+      type === 'video'
+        ? {
+            audio: true,
+            video: {
+              width: { ideal: 1280 },
+              height: { ideal: 720 },
+              facingMode: 'user'
+            }
+          }
+        : { audio: true }
+    );
 
     return localStream;
   }
@@ -1531,20 +1576,41 @@ const heading = document.querySelector('.chat-heading');
     };
 
     peerConnection.ontrack = event => {
-      playRemoteAudio(event.streams[0]);
+      playRemoteMedia(event.streams[0]);
     };
 
     return peerConnection;
   }
 
-  function playRemoteAudio(stream) {
-    if (!remoteAudio) {
-      remoteAudio = document.createElement('audio');
-      remoteAudio.autoplay = true;
-      document.body.appendChild(remoteAudio);
+  function playRemoteMedia(stream) {
+    const type = currentCall?.type || 'audio';
+
+    if (!remoteMedia) {
+      remoteMedia = document.createElement(
+        type === 'video' ? 'video' : 'audio'
+      );
+
+      remoteMedia.autoplay = true;
+      remoteMedia.playsInline = true;
+
+      if (type === 'video') {
+        remoteMedia.id = 'remoteMedia';
+        remoteMedia.style.cssText = [
+          'width:100%', 'height:100%',
+          'object-fit:contain'
+        ].join(';');
+
+        const box = $('callMediaBox');
+
+        if (box) {
+          box.prepend(remoteMedia);
+        }
+      } else {
+        document.body.appendChild(remoteMedia);
+      }
     }
 
-    remoteAudio.srcObject = stream;
+    remoteMedia.srcObject = stream;
   }
 
   function closePeerConnection() {
@@ -1555,10 +1621,15 @@ const heading = document.querySelector('.chat-heading');
       peerConnection = null;
     }
 
-    if (remoteAudio) {
-      remoteAudio.srcObject = null;
-      remoteAudio.remove();
-      remoteAudio = null;
+    if (remoteMedia) {
+      remoteMedia.srcObject = null;
+      remoteMedia.remove();
+      remoteMedia = null;
+    }
+
+    if (callMediaBox) {
+      callMediaBox.remove();
+      callMediaBox = null;
     }
   }
 
@@ -1637,7 +1708,7 @@ const heading = document.querySelector('.chat-heading');
     }
   }
 
-  async function startAudioCall() {
+  async function startCall(type) {
     if (!user || guest || !currentChat || isGeneral(currentChat)) return;
 
     const targetId = membersOf(currentChat)
@@ -1656,6 +1727,7 @@ const heading = document.querySelector('.chat-heading');
           callerId: user.$id,
           callerName: (user.name || 'Пользователь').slice(0, 64),
           targetId,
+          type,
           status: 'ringing',
           createdAt: Math.floor(Date.now() / 1000)
         },
@@ -1668,16 +1740,25 @@ const heading = document.querySelector('.chat-heading');
       currentCall = {
         id: call.$id,
         role: 'caller',
-        targetId
+        targetId,
+        type
       };
 
       updateHangupButton();
+      ensureCallMediaBox(type);
 
-      const stream = await getMicrophone();
+      if (type === 'video') {
+        const localVideo = $('localVideo');
+        const stream = await getCallMedia(type);
+        localVideo.srcObject = stream;
+      } else {
+        await getCallMedia(type);
+      }
+
       const pc = createPeerConnection();
 
-      stream.getTracks().forEach(track => {
-        pc.addTrack(track, stream);
+      localStream.getTracks().forEach(track => {
+        pc.addTrack(track, localStream);
       });
 
       const offer = await pc.createOffer();
@@ -1689,7 +1770,7 @@ const heading = document.querySelector('.chat-heading');
         pc.localDescription
       );
 
-      status('Вызываю…');
+      status(type === 'video' ? 'Видеозвонок…' : 'Вызываю…');
     } catch (error) {
       alert('Не удалось начать звонок: ' + error.message);
       await closeCall();
@@ -1698,13 +1779,17 @@ const heading = document.querySelector('.chat-heading');
 
   async function acceptIncomingCall(call) {
     try {
+      const type = call.type || 'audio';
+
       currentCall = {
         id: call.$id,
         role: 'target',
-        callerId: call.callerId
+        callerId: call.callerId,
+        type
       };
 
       updateHangupButton();
+      ensureCallMediaBox(type);
 
       await api(
         documentPath(CONFIG.callsId, call.$id),
@@ -1712,11 +1797,18 @@ const heading = document.querySelector('.chat-heading');
         { data: { status: 'accepted' } }
       );
 
-      const stream = await getMicrophone();
+      if (type === 'video') {
+        const localVideo = $('localVideo');
+        const stream = await getCallMedia(type);
+        localVideo.srcObject = stream;
+      } else {
+        await getCallMedia(type);
+      }
+
       const pc = createPeerConnection();
 
-      stream.getTracks().forEach(track => {
-        pc.addTrack(track, stream);
+      localStream.getTracks().forEach(track => {
+        pc.addTrack(track, localStream);
       });
 
       const offer = await findCallSignal(call.$id, 'offer');
@@ -1855,7 +1947,9 @@ const heading = document.querySelector('.chat-heading');
 
       if (call) {
         incomingCall = call;
-        $('callTitle').textContent = 'Входящий звонок';
+        $('callTitle').textContent = call.type === 'video'
+          ? 'Входящий видеозвонок'
+          : 'Входящий звонок';
         $('callSubtitle').textContent =
           call.callerName || 'Пользователь';
         $('callOverlay').style.display = 'flex';
