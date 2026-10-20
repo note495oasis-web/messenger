@@ -1614,24 +1614,19 @@ const CONFIG = {
   }
 
   function closePeerConnection() {
-    if (peerConnection) {
-      peerConnection.onicecandidate = null;
-      peerConnection.ontrack = null;
-      peerConnection.close();
-      peerConnection = null;
-    }
-
-    if (remoteMedia) {
-      remoteMedia.srcObject = null;
-      remoteMedia.remove();
-      remoteMedia = null;
-    }
-
-    if (callMediaBox) {
-      callMediaBox.remove();
-      callMediaBox = null;
-    }
+  if (peerConnection) {
+    peerConnection.onicecandidate = null;
+    peerConnection.ontrack = null;
+    peerConnection.close();
+    peerConnection = null;
   }
+
+  if (remoteMedia) {
+    remoteMedia.srcObject = null;
+    remoteMedia.remove();
+    remoteMedia = null;
+  }
+}
 
   async function sendCallSignal(callId, kind, payload) {
     await api(documentsPath(CONFIG.callsignalsId), 'POST', {
@@ -1842,37 +1837,42 @@ const CONFIG = {
     }
   }
 
-  async function closeCall(callId, endStatus = 'ended') {
-    if (callId) {
-      try {
-        await api(
-          documentPath(CONFIG.callsId, callId),
-          'PATCH',
-          { data: { status: endStatus } }
-        );
-      } catch (error) {
-        console.error(error);
-      }
+async function closeCall(callId, endStatus = 'ended') {
+  if (callId) {
+    try {
+      await api(
+        documentPath(CONFIG.callsId, callId),
+        'PATCH',
+        { data: { status: endStatus } }
+      );
+    } catch (error) {
+      console.error(error);
     }
-
-    closePeerConnection();
-
-    if (localStream) {
-      localStream.getTracks().forEach(track => track.stop());
-      localStream = null;
-    }
-
-    currentCall = null;
-    incomingCall = null;
-    pendingCandidates = [];
-
-    if ($('callOverlay')) {
-      $('callOverlay').style.display = 'none';
-    }
-
-    updateHangupButton();
-    status('Звонок завершён');
   }
+
+  closePeerConnection();
+
+  if (localStream) {
+    localStream.getTracks().forEach(track => track.stop());
+    localStream = null;
+  }
+
+  if (callMediaBox) {
+    callMediaBox.remove();
+    callMediaBox = null;
+  }
+
+  currentCall = null;
+  incomingCall = null;
+  pendingCandidates = [];
+
+  if ($('callOverlay')) {
+    $('callOverlay').style.display = 'none';
+  }
+
+  updateHangupButton();
+  status('Звонок завершён');
+}
 
   async function checkIncomingCalls() {
     ensureCallOverlay();
